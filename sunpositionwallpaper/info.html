@@ -1,0 +1,40 @@
+
+<p>
+<b>Sun Position Wallpaper 1.14</b>
+</p>
+<p>
+	Sun Position Wallpaper is a program to change the desktop backround according to the sun position: morning, day, evening and night.
+	<br>
+	The latitude, longitude and timezone are required for calculations.
+	<br>
+	The times are taken from an online php script with the following format: <i>time(),HH:MM,HH:MM,HH:MM,HH:MM</i>
+	<br>
+	The hour and minutes are taken with the following php function:
+	<p>
+&#60;?php
+	<br>
+$t=time();
+	<br>
+$zenith_rise_set=90+50/60;
+	<br>
+$zenith_ctw_start_end=96;
+	<br>
+//civil twilight start
+	<br>
+date_sunrise($t,SUNFUNCS_RET_STRING,$_GET['lat'],$_GET['long'],$zenith_ctw_start_end,$_GET['offset']);
+	<br>
+//sun rise
+	<br>
+date_sunrise($t,SUNFUNCS_RET_STRING,$_GET['lat'],$_GET['long'],$zenith_rise_set,$_GET['offset']);
+	<br>
+//sun set
+	<br>
+date_sunset($t,SUNFUNCS_RET_STRING,$_GET['lat'],$_GET['long'],$zenith_rise_set,$_GET['offset']);
+	<br>
+//civil twilight end
+	<br>
+date_sunset($t,SUNFUNCS_RET_STRING,$_GET['lat'],$_GET['long'],$zenith_ctw_start_end,$_GET['offset']);
+	<br>
+?&#62;
+	</p>
+</p>

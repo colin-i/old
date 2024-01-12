@@ -1,0 +1,179 @@
+
+format elfobj
+
+include "constants.h"
+
+##icon
+import "_gtk_window_set_icon" gtk_window_set_icon
+function window_set_icon(sd pixbuf,sd window)
+    call gtk_window_set_icon(window,pixbuf)
+endfunction
+import "pixbuf_from_file_forward_data" pixbuf_from_file_forward_data_
+function setwndicon(data window,str filename)
+    data icon^window_set_icon
+    call pixbuf_from_file_forward_data_(filename,icon,window)
+endfunction
+
+##label
+function labelfield_left_prepare(ss text)
+    sd widget
+    sd GTK_TYPE_LABEL
+    str label="label"
+    str x="xalign"
+    data left=0
+    data n=0
+
+    import "_gtk_label_get_type" gtk_label_get_type
+    import "_gtk_widget_new" gtk_widget_new
+    setcall GTK_TYPE_LABEL gtk_label_get_type()
+    setcall widget gtk_widget_new(GTK_TYPE_LABEL,label,text,x,left,left,n)
+    return widget
+endfunction
+
+function texter(ss text,sd flags)
+    import "_gtk_message_dialog_new" gtk_message_dialog_new
+    str GTK_BUTTONS_OK=1
+    str error="%s"
+    sd msg
+    setcall msg gtk_message_dialog_new(0,(GTK_DIALOG_DESTROY_WITH_PARENT),flags,GTK_BUTTONS_OK,error,text,0)
+    import "_gtk_dialog_run" gtk_dialog_run
+    call gtk_dialog_run(msg)
+    import "_gtk_widget_destroy" gtk_widget_destroy
+    call gtk_widget_destroy(msg)
+endfunction
+
+##message
+function texter_warning(ss text)
+    call texter(text,(GTK_MESSAGE_WARNING))
+endfunction
+#get pointer
+function getptrgerr()
+    data gerror#1
+    data ptrgerror^gerror
+    data null=0
+    set gerror null
+    return ptrgerror
+endfunction
+#view gerror
+function view_gerror_message(data gerror)
+    #typedef guint32 GQuark;
+    #GQuark       domain
+    #gint         code
+    #gchar       *message
+    data pointer#1
+    set pointer gerror
+    data qword=QWORD
+    add pointer qword
+    call texter_warning(pointer#)
+endfunction
+#view and clean
+function gerrtoerr(data ptrgerror)
+    call view_gerror_message(ptrgerror#)
+    import "_g_error_free" g_error_free
+    call g_error_free(ptrgerror#)
+endfunction
+
+##pixbuf
+function pixbuf_from_file(ss filename)
+    sd pixbuf#1
+    data null=NULL
+    sd ptrgerror#1
+
+    setcall ptrgerror getptrgerr()
+
+    import "_gdk_pixbuf_new_from_file_utf8" gdk_pixbuf_new_from_file
+    setcall pixbuf gdk_pixbuf_new_from_file(filename,ptrgerror)
+    if pixbuf==null
+            call gerrtoerr(ptrgerror)
+            return null
+    endif
+    return pixbuf
+endfunction
+#returns the forward or null
+function pixbuf_from_file_forward_data(ss filename,sd forward,sd data)
+    sd pixbuf
+    setcall pixbuf pixbuf_from_file(filename)
+    sd null=0
+    if pixbuf==null
+        return null
+    endif
+    sd ret
+    setcall ret forward(pixbuf,data)
+    import "_g_object_unref" g_object_unref
+    call g_object_unref(pixbuf)
+    return ret
+endfunction
+
+
+##table
+import "_gtk_table_new" gtk_table_new
+import "_gtk_container_add" gtk_container_add
+
+function tablefield(sd bag,sd row,sd col)
+    sd widget
+    data false=0
+    setcall widget gtk_table_new(row,col,false)
+    call gtk_container_add(bag,widget)
+    return widget
+endfunction
+
+function table_add_row_allCol(sd table,sd row,sd allCol)
+    sd rows
+    sd columns
+    sd ptr_rows^rows
+    sd ptr_columns^columns
+
+    import "_gtk_table_get_size" gtk_table_get_size
+    import "_gtk_table_resize" gtk_table_resize
+    call gtk_table_get_size(table,ptr_rows,ptr_columns)
+    sd lastrow
+    set lastrow rows
+    inc rows
+    call gtk_table_resize(table,rows,columns)
+
+    data true=1
+    data false=0
+    data dword=4
+    data firstcol=1
+
+    sd c=0
+    sd col
+    if allCol==true
+        set col columns
+    else
+        set col firstcol
+    endelse
+    sd add
+    set add true
+    while add==true
+        import "_gtk_table_attach_defaults" gtk_table_attach_defaults
+        call gtk_table_attach_defaults(table,row#,c,col,lastrow,rows)
+        add row dword
+        if col!=columns
+            inc c
+            inc col
+        else
+            set add false
+        endelse
+    endwhile
+    return row
+endfunction
+
+#returns the cells pointer that may points to the next block
+function table_add_cells(sd table,sd row,sd cells)
+    data false=0
+    sd i=0
+    while i!=row
+        setcall cells table_add_row_allCol(table,cells,false)
+        inc i
+    endwhile
+    return cells
+endfunction
+
+#first 3 arguments for tablefield, widgets arg has rows*cols child cell widgets
+function tablefield_cells(sd bag,sd row,sd col,sd cells)
+    sd widget
+    setcall widget tablefield(bag,0,col)
+    call table_add_cells(widget,row,cells)
+    return widget
+endfunction

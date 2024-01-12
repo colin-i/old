@@ -1,0 +1,165 @@
+
+
+format elfobj
+
+include "./constants.h"
+
+import "getptr_settings_tray" getptr_settings_tray
+
+import "_gtk_main_quit" gtk_main_quit
+
+function sel_settings(sd *item,sd *data)
+    call uninit_popup()
+    import "set_settings_clicked" set_settings_clicked
+    call set_settings_clicked()
+    call gtk_main_quit()
+endfunction
+function sel_viewnexttime()
+    call uninit_popup()
+    import "wallpapers_action" wallpapers_action
+    call wallpapers_action(2)
+endfunction
+function sel_exit(sd *item,sd *data)
+    call uninit_popup()
+    sd p
+    setcall p getptr_settings_tray()
+    set p# 0
+    call gtk_main_quit()
+endfunction
+
+function getpopuphandle()
+    data menu#1
+    const ptr_menu^menu
+    return menu
+endfunction
+
+function uninit_popup()
+    data p%ptr_menu
+    if p#!=0
+        import "_gtk_widget_destroy" gtk_widget_destroy
+        call gtk_widget_destroy(p#)
+        set p# 0
+    endif
+endfunction
+
+function select_intr()
+    data sel_desel#1
+    const ptr_sel_desel^sel_desel
+    set sel_desel 0
+endfunction
+function deselect_intr()
+    data p%ptr_sel_desel
+    set p# 1
+endfunction
+
+import "_g_signal_connect_data" g_signal_connect_data
+
+function init_popup()
+    sd popupmenu
+    import "_gtk_menu_new" gtk_menu_new
+    setcall popupmenu gtk_menu_new()
+    data inter%ptr_menu
+    set inter# popupmenu
+
+    import "_gtk_menu_shell_append" gtk_menu_shell_append
+    import "_gtk_menu_item_new_with_label" gtk_menu_item_new_with_label
+    ss sets="Settings"
+    ss next="Next time"
+    ss exit="Exit"
+    sd s
+    sd n
+    sd e
+    str activate="activate"
+
+    str sl="select"
+    str dsl="deselect"
+    data sl_f^select_intr
+    data dsl_f^deselect_intr
+    data p%ptr_sel_desel
+    set p# 1
+
+    setcall s gtk_menu_item_new_with_label(sets)
+    data fn_set^sel_settings
+    call g_signal_connect_data(s,activate,fn_set,0,0,0)
+    call g_signal_connect_data(s,sl,sl_f,0,0,0)
+    call g_signal_connect_data(s,dsl,dsl_f,0,0,0)
+
+    setcall n gtk_menu_item_new_with_label(next)
+    data fn_view^sel_viewnexttime
+    call g_signal_connect_data(n,activate,fn_view,0,0,0)
+    call g_signal_connect_data(n,sl,sl_f,0,0,0)
+    call g_signal_connect_data(n,dsl,dsl_f,0,0,0)
+
+    setcall e gtk_menu_item_new_with_label(exit)
+    data fn_ex^sel_exit
+    call g_signal_connect_data(e,activate,fn_ex,0,0,0)
+    call g_signal_connect_data(e,sl,sl_f,0,0,0)
+    call g_signal_connect_data(e,dsl,dsl_f,0,0,0)
+
+    call gtk_menu_shell_append(popupmenu,s)
+    call gtk_menu_shell_append(popupmenu,n)
+    call gtk_menu_shell_append(popupmenu,e)
+endfunction
+
+function closepopup(sd ncode,sd wParam,sd lParam)
+    import "_CallNextHookEx@16" CallNextHookEx
+    if wParam==0x0201
+        import "_UnhookWindowsHookEx@4" UnhookWindowHookEx
+        data hook#1
+        const ptr_hook^hook
+        call UnhookWindowHookEx(hook)
+
+        sd menu
+        setcall menu getpopuphandle()
+        if menu!=0
+            data p%ptr_sel_desel
+            if p#==1
+                call uninit_popup()
+            endif
+        endif
+    endif
+    sd ret
+    setcall ret CallNextHookEx(0,ncode,wParam,lParam)
+    return ret
+endfunction
+
+function popup(sd *statusicon,sd button,sd activate_time,sd *data)
+    call init_popup()
+
+    sd popupmenu
+    setcall popupmenu getpopuphandle()
+    import "_gtk_menu_popup" gtk_menu_popup
+    call gtk_menu_popup(popupmenu,0,0,0,0,button,activate_time)
+
+    import "_SetWindowsHookExA@16" SetWindowsHookEx
+    data close^closepopup
+    data p_hk%ptr_hook
+    setcall p_hk# SetWindowsHookEx(14,close,0,0)
+    if p_hk#==0
+        str errh="Hook error"
+        import "texter_warning" texter_warning
+        call texter_warning(errh)
+    endif
+
+    import "_gtk_widget_show_all" gtk_widget_show_all
+    call gtk_widget_show_all(popupmenu)
+endfunction
+
+function tray(ss tooltip)
+    import "geticon" geticon
+    ss icon
+    setcall icon geticon()
+
+    data statusicon#1
+    import "_gtk_status_icon_new_from_file" gtk_status_icon_new_from_file
+    setcall statusicon gtk_status_icon_new_from_file(icon)
+
+    data f^popup
+    str pm="popup-menu"
+    call g_signal_connect_data(statusicon,pm,f,0,0,0)
+
+    import "_gtk_status_icon_set_tooltip_text" gtk_status_icon_set_tooltip_text
+    call gtk_status_icon_set_tooltip_text(statusicon,tooltip)
+
+    return statusicon
+endfunction
