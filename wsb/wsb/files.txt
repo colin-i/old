@@ -1,0 +1,71 @@
+C:\Desktop\websitebuilder\files\
+D:\x\dest
+#A site model example, this file is parsed by the program
+simple.container
+    univ_table.php
+    univ_table_entry.php
+        univ_table.php
+!
+html.container
+    no_ad.container
+        donations.html
+        prezentare.dir
+        ..
+    !
+!
+main.container
+    games/post.php
+    html.container
+        ad.container
+            #test.php
+            index.php
+                display_swf.php
+            screenshots.php
+            #this will change to or make folder programs, and then index.php
+            programs.dir
+                app.php
+                video.php
+                #back from programs to dest folder
+            ..
+            games.dir
+                        swfs_disp.php
+                #
+                        play.php
+                            display_swf.php
+            ..
+            messages.dir
+                message.php
+                new_message.php
+            ..
+            contact.php
+            links.php
+        !
+    !
+!
+missing.php
+#.container if in a replacement is like a file
+    main.container
+        html.container
+            404.php
+                contact.php
+main.container
+    html.container
+        ad.container
+            tutorials.dir
+                wow.dir
+        !
+    !
+!
+                    ip_guard.container
+                        html.container
+                            ad.container
+                                obj.container
+                                    quest.php
+                                    item.php
+                                !
+                            !
+                        !
+                    !
+                ..
+            ..
+#only rows that ends with a carriage return and/or line feed are counted
