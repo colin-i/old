@@ -26,18 +26,18 @@ endfunction
 
 #pixbuf/0
 function pixbuf_from_file(ss filename)
-    import "gdk_pixbuf_new_from_file" gdk_pixbuf_new_from_file
+    importx "_gdk_pixbuf_new_from_file_utf8" gdk_pixbuf_new_from_file    #_utf8 same as in ovideo
     sd pixbuf
     sd gerror=0
     setcall pixbuf gdk_pixbuf_new_from_file(filename,#gerror)
-    if pixbuf==0
+    if pixbuf=0
         call gerrtoerr(gerror)
     endif
     return pixbuf
 endfunction
 
 function gerrtoerr(sd gerror)
-    import "g_error_free" g_error_free
+    importx "_g_error_free" g_error_free
     #typedef guint32 GQuark;
     #GQuark       domain
     #gint         code
@@ -52,23 +52,23 @@ endfunction
 
 
 function texter(ss msg)
-    import "printf" printf
+    importx "_printf" printf
     call printf(msg)
-    chars nl={0xa,0}
+    char nl={0xa,0}
     call printf(#nl)
 endfunction
 
 function pack_tight(sd box,sd wid)
-    import "gtk_box_pack_start" gtk_box_pack_start
+    importx "_gtk_box_pack_start" gtk_box_pack_start
     call gtk_box_pack_start(box,wid,0,0,0)
 endfunction
 
 import "mainvbox" mainvbox
 import "mainwindow_label" mainwindow_label
 
-import "gtk_vbox_new" gtk_vbox_new
-import "gtk_hbox_new" gtk_hbox_new
-import "gtk_container_add" gtk_container_add
+importx "_gtk_vbox_new" gtk_vbox_new
+importx "_gtk_hbox_new" gtk_hbox_new
+importx "_gtk_container_add" gtk_container_add
 function mainwindow(sd window)
     sd vbox
     setcall vbox gtk_vbox_new(0,0)
@@ -88,7 +88,7 @@ function mainwindow(sd window)
     import "update_info" update_info
     sd info
     setcall info update_info()
-    if info#==(TRUE)
+    if info#=(TRUE)
         import "update_text" update_text
         sd text
         setcall text update_text(0)
@@ -102,18 +102,18 @@ function mainwindow(sd window)
     setcall hbox gtk_hbox_new(0,0)
     call pack_tight(vbox,hbox)
 
-    chars new="New Site"
+    char new="New Site"
     data *new_fn^new_site
-    chars *new_i="Create a new site in a selected folder"
+    char *new_i="Create a new site in a selected folder"
     #
     import "open_last" open_last
-    chars *open="Open Last"
+    char *open="Open Last"
     data *open_fn^open_last
-    chars *open_i="Open last site project"
+    char *open_i="Open last site project"
     #
-    chars *options="Options"
+    char *options="Options"
     data *^options
-    chars *options_i="Set the preferences"
+    char *options_i="Set the preferences"
     #
     data *=0
 
@@ -121,11 +121,11 @@ function mainwindow(sd window)
 endfunction
 
 function connect_signal_data(sd widget,ss signal,sd fn,sd data)
-    import "g_signal_connect_data" g_signal_connect_data
+    importx "_g_signal_connect_data" g_signal_connect_data
     call g_signal_connect_data(widget,signal,fn,data,0,0)
 endfunction
-import "strlen" strlen
-import "gtk_button_new_with_label" gtk_button_new_with_label
+importx "_strlen" strlen
+importx "_gtk_button_new_with_label" gtk_button_new_with_label
 function add_buttons(sd box,sd packs)
     ss title
     sd fn
@@ -147,7 +147,7 @@ function add_buttons(sd box,sd packs)
         str clicked="clicked"
         call connect_signal_data(button,clicked,fn,0)
         #
-        import "gtk_widget_set_tooltip_markup" gtk_widget_set_tooltip_markup
+        importx "_gtk_widget_set_tooltip_markup" gtk_widget_set_tooltip_markup
         call gtk_widget_set_tooltip_markup(button,tooltip)
         #
         call pack_tight(box,button)
@@ -163,10 +163,10 @@ function new_site()
     call dialog_modal_def_action(title,i,s,200,200)
 endfunction
 function new_site_init(sd vbox)
-    import "gtk_table_new" gtk_table_new
-    import "gtk_table_attach_defaults" gtk_table_attach_defaults
-    import "gtk_table_attach" gtk_table_attach
-    import "gtk_entry_new" gtk_entry_new
+    importx "_gtk_table_new" gtk_table_new
+    importx "_gtk_table_attach_defaults" gtk_table_attach_defaults
+    importx "_gtk_table_attach" gtk_table_attach
+    importx "_gtk_entry_new" gtk_entry_new
     sd label
     sd entry
     sd pointer
@@ -201,8 +201,8 @@ function new_site_init(sd vbox)
     #
     call gtk_container_add(vbox,table)
 endfunction
-import "gtk_entry_get_text" gtk_entry_get_text
-import "sprintf" sprintf
+importx "_gtk_entry_get_text" gtk_entry_get_text
+importx "_sprintf" sprintf
 function new_site_set()
     import "proj_work_with_all_projects" proj_work_with_all_projects
     call proj_work_with_all_projects()
@@ -227,14 +227,14 @@ function new_site_set()
     import "proj_set" proj_set
     ss filename
     setcall filename proj_set(folder_string,name_string)
-    if filename==0
+    if filename=0
         return (void)
     endif
     import "file_open_overwrite" file_open_overwrite
-    import "fclose" fclose
+    importx "_fclose" fclose
     sd file
     setcall file file_open_overwrite(filename)
-    if file==0
+    if file=0
         return (void)
     endif
     import "proj_root" proj_root
@@ -256,7 +256,7 @@ function new_site_folder()
     data folder#1
     return #folder
 endfunction
-import "gtk_entry_set_text" gtk_entry_set_text
+importx "_gtk_entry_set_text" gtk_entry_set_text
 function new_site_sel_click()
     ss folder
     setcall folder filechooser_folder()
@@ -264,7 +264,7 @@ function new_site_sel_click()
         sd folder_entry
         setcall folder_entry new_site_folder()
         call gtk_entry_set_text(folder_entry#,folder)
-        import "g_free" g_free
+        importx "_g_free" g_free
         call g_free(folder)
     endif
 endfunction
@@ -278,9 +278,9 @@ function filechooser_folder()
     setcall filename filechooser(sel_folder,(GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER))
     return filename
 endfunction
-import "gtk_file_chooser_dialog_new" gtk_file_chooser_dialog_new
-import "gtk_dialog_run" gtk_dialog_run
-import "gtk_widget_destroy" gtk_widget_destroy
+importx "_gtk_file_chooser_dialog_new" gtk_file_chooser_dialog_new
+importx "_gtk_dialog_run" gtk_dialog_run
+importx "_gtk_widget_destroy" gtk_widget_destroy
 function filechooser(ss title,sd action)
     str GTK_STOCK_CANCEL="gtk-cancel"
     str select="Select"
@@ -289,18 +289,18 @@ function filechooser(ss title,sd action)
     sd resp
     setcall resp gtk_dialog_run(dialog)
     ss filename=0
-    if resp==(GTK_RESPONSE_ACCEPT)
-        import "gtk_file_chooser_get_filename_utf8" gtk_file_chooser_get_filename_utf8
+    if resp=(GTK_RESPONSE_ACCEPT)
+        importx "_gtk_file_chooser_get_filename_utf8" gtk_file_chooser_get_filename_utf8
         setcall filename gtk_file_chooser_get_filename_utf8(dialog)
     endif
     call gtk_widget_destroy(dialog)
     return filename
 endfunction
-import "_get_errno" get_errno
+importx "__get_errno" get_errno
 function errno_disp(ss text)
     sd er
     call get_errno(#er)
-    chars info#300
+    char info#300
     str f="%s. Errno: %i"
     call sprintf(#info,f,text,er)
     call texter(#info)
@@ -308,37 +308,37 @@ endfunction
 
 #mem/0
 function memalloc(sd sz)
-    import "malloc" malloc
+    importx "_malloc" malloc
     sd mem
     SetCall mem malloc(sz)
-    If mem==0
+    If mem=0
         str newmem="Malloc failed"
         call texter(newmem)
     endif
     return mem
 EndFunction
 
-function dialog_modal_def_action(ss title,sd forward_init,sd forward_set,sd width,sd height)
+function dialog_modal_def_action(ss title,sv forward_init,sv forward_set,sd width,sd height)
     str GTK_STOCK_CANCEL="gtk-cancel"
     str GTK_STOCK_OK="gtk-ok"
 
-    import "gtk_dialog_new_with_buttons" gtk_dialog_new_with_buttons
+    importx "_gtk_dialog_new_with_buttons" gtk_dialog_new_with_buttons
     sd dialog
     setcall dialog gtk_dialog_new_with_buttons(title,0,(GTK_DIALOG_MODAL),GTK_STOCK_CANCEL,(GTK_RESPONSE_CANCEL),GTK_STOCK_OK,(GTK_RESPONSE_OK),0)
 
-    import "gtk_window_set_default_size" gtk_window_set_default_size
+    importx "_gtk_window_set_default_size" gtk_window_set_default_size
     call gtk_window_set_default_size(dialog,width,height)
 
-    import "gtk_dialog_get_content_area" gtk_dialog_get_content_area
+    importx "_gtk_dialog_get_content_area" gtk_dialog_get_content_area
     sd vbox
     setcall vbox gtk_dialog_get_content_area(dialog)
     call forward_init(vbox)
 
-    import "gtk_widget_show_all" gtk_widget_show_all
+    importx "_gtk_widget_show_all" gtk_widget_show_all
     call gtk_widget_show_all(dialog)
     sd resp
     setcall resp gtk_dialog_run(dialog)
-    if resp==(GTK_RESPONSE_OK)
+    if resp=(GTK_RESPONSE_OK)
         call forward_set()
     endif
     call gtk_widget_destroy(dialog)
@@ -352,8 +352,8 @@ function label_left(ss text)
     str x="xalign"
     data left=0
 
-    import "gtk_label_get_type" gtk_label_get_type
-    import "gtk_widget_new" gtk_widget_new
+    importx "_gtk_label_get_type" gtk_label_get_type
+    importx "_gtk_widget_new" gtk_widget_new
     setcall GTK_TYPE_LABEL gtk_label_get_type()
     setcall widget gtk_widget_new(GTK_TYPE_LABEL,label,text,x,left,left,0)
     return widget
@@ -361,12 +361,12 @@ endfunction
 
 #bool
 function set_script_folder()
-    import "GetModuleFileNameA" GetModuleFileName
+    importx "_GetModuleFileNameA@12" GetModuleFileName
     ss mem
     setcall mem Scriptfullpath()
     sd size
     setcall size GetModuleFileName(0,mem,(MAX_PATH))
-    if size==0
+    if size=0
         call texter("GetModuleFileName Error.")
         return (FALSE)
     endif
@@ -381,13 +381,13 @@ endfunction
 
 #mem
 function Scriptfullpath()
-    chars mem#MAX_PATH
-    chars *safe_chars_to_add#safe_chars_to_add
+    char mem#MAX_PATH
+    char *safe_chars_to_add#safe_chars_to_add
                     #GetModuleFileName
                     #Windows XP:  The string is truncated to nSize characters and is not null-terminated
                     #not this case, can't be greater than max_path
                     #end with 0 for fun
-    chars *safe_end=0
+    char *safe_end=0
     return #mem
 endfunction
 function Scriptfullpath_get()
@@ -418,7 +418,7 @@ Function endoffolders(ss path)
         dec cursor
         sd bool
         setcall bool filepathdelims(cursor)
-        if bool==(TRUE)
+        if bool=(TRUE)
             inc cursor
             return cursor
         endif
@@ -428,12 +428,12 @@ Function endoffolders(ss path)
 EndFunction
 #true if match or false
 Function filepathdelims(ss str)
-        Chars bslash="\\"
-        Chars slash="/"
-        If str#==bslash
+        char bslash="\\"
+        char slash="/"
+        If str#=bslash
                 Return (TRUE)
         EndIf
-        If str#==slash
+        If str#=slash
                 Return (TRUE)
         EndIf
         Return (FALSE)
@@ -452,7 +452,7 @@ function dirch(ss value)
 endfunction
 #path
 function get_folder_fname(ss folder,ss fname)
-    chars idata#50
+    char idata#50
     str iform="%s/%s"
     call sprintf(#idata,iform,folder,fname)
     sd allname
@@ -464,7 +464,7 @@ function get_scriptfolder_path(ss path)
     ss scriptfolder
     setcall scriptfolder Scriptfullpath_get()
     #
-    import "strcat" strcat
+    importx "_strcat" strcat
     call strcat(scriptfolder,path)
     return scriptfolder
 endfunction
@@ -479,8 +479,8 @@ function set_app_icon(sd window)
     sd pixbuf
     setcall pixbuf pixbuf_from_file(ic)
     if pixbuf!=0
-        import "gtk_window_set_icon" gtk_window_set_icon
-        import "g_object_unref" g_object_unref
+        importx "_gtk_window_set_icon" gtk_window_set_icon
+        importx "_g_object_unref" g_object_unref
         call gtk_window_set_icon(window,pixbuf)
         call g_object_unref(pixbuf)
     endif
@@ -490,7 +490,7 @@ endfunction
 function slen_s(ss string,sd size,sd p_out)
     sd i=0
     while i!=size
-        if string#==0
+        if string#=0
             set p_out# i
             return (TRUE)
         endif
@@ -511,15 +511,15 @@ function options()
     sd vbox
     setcall vbox gtk_dialog_get_content_area(dialog)
 
-    import "gtk_check_button_new_with_label" gtk_check_button_new_with_label
+    importx "_gtk_check_button_new_with_label" gtk_check_button_new_with_label
     import "update_pref_get" update_pref_get
     import "update_pref_set" update_pref_set
     sd bool
     sd updates_option
     setcall updates_option gtk_check_button_new_with_label("Check for updates")
     setcall bool update_pref_get()
-    if bool==(TRUE)
-        import "gtk_toggle_button_set_active" gtk_toggle_button_set_active
+    if bool=(TRUE)
+        importx "_gtk_toggle_button_set_active" gtk_toggle_button_set_active
         call gtk_toggle_button_set_active(updates_option,bool)
     endif
     call gtk_container_add(vbox,updates_option)
@@ -527,8 +527,8 @@ function options()
     call gtk_widget_show_all(updates_option)
     sd resp
     setcall resp gtk_dialog_run(dialog)
-    if resp==(GTK_RESPONSE_OK)
-        import "gtk_toggle_button_get_active" gtk_toggle_button_get_active
+    if resp=(GTK_RESPONSE_OK)
+        importx "_gtk_toggle_button_get_active" gtk_toggle_button_get_active
         setcall bool gtk_toggle_button_get_active(updates_option)
         call update_pref_set(bool)
     endif
@@ -542,12 +542,12 @@ function dialog_message_format(ss format)
     setcall len strlen(format)
     sd nr_of_args=0
     sd count_2=0
-    chars escape="%"
+    char escape="%"
     ss cursor
     set cursor format
     while len!=0
-        if count_2==0
-            if cursor#==escape
+        if count_2=0
+            if cursor#=escape
                 inc count_2
             endif
         else
@@ -564,7 +564,7 @@ function dialog_message_format(ss format)
         call texter("Too many arguments at message")
         return (FALSE)
     endif
-    import "gtk_message_dialog_new" gtk_message_dialog_new
+    importx "_gtk_message_dialog_new" gtk_message_dialog_new
     sd useful_value
     sd *parent=0
     sd *flags=GTK_DIALOG_MODAL
@@ -608,7 +608,7 @@ function dialog_message_format(ss format)
     sd bool
     sd resp
     setcall resp gtk_dialog_run(widget)
-    if resp==(GTK_RESPONSE_YES)
+    if resp=(GTK_RESPONSE_YES)
         set bool (TRUE)
     else
         set bool (FALSE)
@@ -623,7 +623,7 @@ function get_len_with_null_max_path(ss mem,sd size)
     set cursor mem
     while len<size
         inc len
-        if cursor#==0
+        if cursor#=0
             if len>(MAX_PATH)
                 call texter("path too long at root folder read")
                 return 0

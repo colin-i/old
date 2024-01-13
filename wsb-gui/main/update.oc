@@ -14,7 +14,7 @@ const IPPROTO_TCP=6
 
 const WSAEWOULDBLOCK=10035
 
-import "WSAStartup" WSAStartup
+importx "_WSAStartup@8" WSAStartup
 
 import "texter" texter
 
@@ -25,7 +25,7 @@ function updates()
         return (void)
     endif
 
-    chars WSASTARTUP#400
+    char WSASTARTUP#400
 
     const majorversion=2
     const minorversion=2
@@ -40,16 +40,16 @@ function updates()
 
     call updates_main()
 
-    import "WSACleanup" WSACleanup
+    import "_WSACleanup@0" WSACleanup
     call WSACleanup()
 endfunction
 
 function updates_main()
-    import "socket" socket
-    import "closesocket" closesocket
+    importx "_socket@12" socket
+    importx "_closesocket@4" closesocket
     sd connectsocket
     setcall connectsocket socket((AF_INET),(SOCK_STREAM),(IPPROTO_TCP))
-    if connectsocket==(INVALID_SOCKET)
+    if connectsocket=(INVALID_SOCKET)
         call texter("socket error")
         return (void)
     endif
@@ -59,7 +59,7 @@ endfunction
 
 function updates_proc(sd con_socket)
     #set the socket to async state, for implementing timeouts
-    import "ioctlsocket" ioctlsocket
+    importx "_ioctlsocket@12" ioctlsocket
     sd nonblk=1
     const IOC_IN=0x80000000
     const IOCPARM_MASK=0x7f
@@ -73,23 +73,23 @@ function updates_proc(sd con_socket)
     const fd_set_array=FD_SETSIZE*DWORD
     const fd_set_size=DWORD+fd_set_array
 
-    const sin_start=!
+    const sin_start=\
 
-    chars sin_family={AF_INET,0}
-    chars *sin_port={0,80}
-    chars *sin_addr={127,0,0,1}
+    char sin_family={AF_INET,0}
+    char *sin_port={0,80}
+    char *sin_addr={127,0,0,1}
     data *reserved={0,0}
 
-    sd size=!-sin_start
+    sd size=\-sin_start
 
-    import "connect" connect
-    import "select" select
+    importx "_connect@12" connect
+    importx "_select@20" select
     str timeout="connect timeout"
     str sel_err="select error"
     sd res
     setcall res connect(con_socket,#sin_family,size)
-    if res==(SOCKET_ERROR)
-        import "WSAGetLastError" WSAGetLastError
+    if res=(SOCKET_ERROR)
+        importx "_WSAGetLastError@0" WSAGetLastError
         sd err
         setcall err WSAGetLastError()
         if err!=(WSAEWOULDBLOCK)
@@ -97,8 +97,8 @@ function updates_proc(sd con_socket)
             return (void)
         endif
         #wait some time for this internet call
-        chars fd_set_write#fd_set_size
-        chars fd_set_err#fd_set_size
+        char fd_set_write#fd_set_size
+        char fd_set_err#fd_set_size
         sd fd_write^fd_set_write
         sd fd_err^fd_set_err
         set fd_write# 1
@@ -112,37 +112,37 @@ function updates_proc(sd con_socket)
         sd *tv_usec=0
         sd tv^tv_sec
         setcall res select(0,0,#fd_set_write,#fd_set_err,#tv)
-        if res==0
+        if res=0
             call texter(timeout)
             return (void)
         endif
-        import "__WSAFDIsSet" WSAFDIsSet
+        import "___WSAFDIsSet@8" WSAFDIsSet
         sd is_set
         setcall is_set WSAFDIsSet(con_socket,#fd_set_write)
-        if is_set==0
+        if is_set=0
             call texter(sel_err)
             return (void)
         endif
     endif
 
     #send the request
-    const req_start=!
+    const req_start=\
 
-    chars request="GET /programs/websitebuilder/version.txt HTTP/1.1"
-    chars *={0xd,0xa}
-    chars *="Host: www.oapplications.com"
-    chars *={0xd,0xa,0xd,0xa}
+    char request="GET /programs/websitebuilder/version.txt HTTP/1.1"
+    char *={0xd,0xa}
+    char *="Host: www.oapplications.com"
+    char *={0xd,0xa,0xd,0xa}
 
-    sd req_sz=!-req_start
+    sd req_sz=\-req_start
 
-    import "send" send
+    importx "_send@16" send
     setcall res send(con_socket,#request,req_sz,0)
-    if res==(SOCKET_ERROR)
+    if res=(SOCKET_ERROR)
         call texter("send error")
     endif
 
     #recv with a proper internet timeout
-    chars fd_set_recv#fd_set_size
+    char fd_set_recv#fd_set_size
     sd fd_recv^fd_set_recv
     set fd_recv# 1
     add fd_recv (DWORD)
@@ -155,18 +155,18 @@ function updates_proc(sd con_socket)
     set next con_socket
     inc next
     setcall res select(next,#fd_set_recv,0,0,#tv_recv)
-    if res==0
+    if res=0
         call texter(timeout)
         return (void)
-    elseif res==(SOCKET_ERROR)
+    elseif res=(SOCKET_ERROR)
         call texter(sel_err)
         return (void)
     endelseif
 
     #data must be here, so do a normal recv()
-    import "recv" recv
+    importx "_recv@16" recv
     const recv_length=400
-    chars recvbuf#recv_length
+    char recvbuf#recv_length
     setcall res recv(con_socket,#recvbuf,(recv_length),0)
     if res>(recv_length-1)
         call texter("recv too many data")
@@ -178,7 +178,7 @@ function updates_proc(sd con_socket)
     add buf res
     set buf# 0
     while buf#!=0xa
-        if res==0
+        if res=0
             set buf# 0xa
         else
             dec res
@@ -199,14 +199,14 @@ endfunction
 const update_text_size=30
 
 function update_compare(ss mem,sd size,ss netversion)
-    import "strlen" strlen
+    importx "_strlen" strlen
     sd netversion_sz
     setcall netversion_sz strlen(netversion)
-    if netversion_sz==size
-        import "memcmp" memcmp
+    if netversion_sz=size
+        importx "_memcmp" memcmp
         sd result
         setcall result memcmp(mem,netversion,size)
-        if result==0
+        if result=0
             return (void)
         endif
     endif
@@ -226,12 +226,12 @@ function update_info()
 endfunction
 #text
 function update_text(sd newversion)
-    chars text="New version available at site: "
-    chars var_text#update_text_size
-    chars *=0
+    char text="New version available at site: "
+    char var_text#update_text_size
+    char *=0
     if newversion!=0
         #need to set the text
-        import "memcpy" memcpy
+        importx "_memcpy" memcpy
         sd sz
         setcall sz strlen(newversion)
         inc sz
@@ -239,7 +239,7 @@ function update_text(sd newversion)
         return (void)
     endif
     #all texts are ready
-    import "strcat" strcat
+    importx "_strcat" strcat
     call strcat(#text,#var_text)
     return #text
 endfunction
@@ -272,10 +272,10 @@ function update_pref_set(sd bool)
     setcall fname update_pref_fname()
     import "file_open" file_open
     import "file_write" file_write
-    import "fclose" fclose
+    importx "_fclose" fclose
     sd file
     setcall file file_open(fname,"wb")
-    if file==0
+    if file=0
         return (void)
     endif
     call file_write(file,#bool,(DWORD))

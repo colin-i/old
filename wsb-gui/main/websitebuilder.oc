@@ -4,16 +4,16 @@ format elfobj
 
 include "../include/wsb.h"
 
-import "gtk_init" gtk_init
-import "gtk_window_new" gtk_window_new
-import "gtk_window_set_title" gtk_window_set_title
-import "gtk_window_set_default_size" gtk_window_set_default_size
-import "gtk_main_quit" gtk_main_quit
-import "g_signal_connect_data" g_signal_connect_data
-import "gtk_widget_show_all" gtk_widget_show_all
-import "gtk_main" gtk_main
+importx "_gtk_init" gtk_init
+importx "_gtk_window_new" gtk_window_new
+importx "_gtk_window_set_title" gtk_window_set_title
+importx "_gtk_window_set_default_size" gtk_window_set_default_size
+importx "_gtk_main_quit" gtk_main_quit
+importx "_g_signal_connect_data" g_signal_connect_data
+importx "_gtk_widget_show_all" gtk_widget_show_all
+importx "_gtk_main" gtk_main
 #bool
-entry main()
+entry _WinMain@16()
 
 #
 import "update_info" update_info
@@ -23,7 +23,7 @@ set info# 0
 import "set_script_folder" set_script_folder
 sd bool
 setcall bool set_script_folder()
-if bool==(FALSE)
+if bool=(FALSE)
     return (FALSE)
 endif
 import "proj_hbox" proj_hbox
@@ -64,7 +64,5 @@ call gtk_main()
 
 #this never returns with some gtk stuff, do cleans with exit
 #return 1
-import "exit" exit
+importx "_exit" exit
 call exit((TRUE))
-
-

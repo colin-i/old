@@ -5,18 +5,18 @@ format elfobj
 include "../include/wsb.h"
 
 import "texter" texter
-import "sprintf" sprintf
+importx "_sprintf" sprintf
 import "errno_disp" errno_disp
 
-import "fclose" fclose
+importx "_fclose" fclose
 #file/0
 function file_open(ss filepath,ss method)
-    import "fopen" fopen
+    importx "_fopen" fopen
     sd file
     setcall file fopen(filepath,method)
-    If file==0
-        chars info#MAX_PATH+safe_chars_to_add
-        chars *=0
+    If file=0
+        char info#MAX_PATH+safe_chars_to_add
+        char *=0
         call sprintf(#info,"Cannot open a file: %s",filepath)
         call texter(#info)
     EndIf
@@ -25,10 +25,10 @@ endfunction
 
 #bool
 function file_write(sd file,sd buffer,sd size)
-    if size==0
+    if size=0
         return (TRUE)
     endif
-    import "fwrite" fwrite
+    importx "_fwrite" fwrite
     sd len
     setcall len fwrite(buffer,1,size,file)
     if len!=0
@@ -38,15 +38,15 @@ function file_write(sd file,sd buffer,sd size)
     call texter(er)
     return (FALSE)
 endfunction
-import "free" free
+importx "_free" free
 import "memalloc" memalloc
 
 #forward/FALSE
-function file_get_content_forward_data(ss filename,sd forward,sd data)
+function file_get_content_forward_data(ss filename,sv forward,sd data)
     ss r="rb"
     sd file
     setcall file file_open(filename,r)
-    if file==0
+    if file=0
         return (FALSE)
     endif
     sd bool
@@ -57,7 +57,7 @@ function file_get_content_forward_data(ss filename,sd forward,sd data)
     endif
     sd len
     setcall len file_tell(file)
-    if len==-1
+    if len=-1
         call fclose(file)
         return (FALSE)
     endif
@@ -68,7 +68,7 @@ function file_get_content_forward_data(ss filename,sd forward,sd data)
     endif
     sd mem
     setcall mem memalloc(len)
-    if mem==0
+    if mem=0
         call fclose(file)
         return (FALSE)
     endif
@@ -93,7 +93,7 @@ endfunction
 
 #bool
 function file_seek(ss file,sd off,sd method)
-    import "fseek" fseek
+    importx "_fseek" fseek
     sd seekint
     setcall seekint fseek(file,off,method)
     If seekint!=0
@@ -105,10 +105,10 @@ function file_seek(ss file,sd off,sd method)
 endfunction
 #sz/-1
 function file_tell(sd file)
-    import "ftell" ftell
+    importx "_ftell" ftell
     sd sz
     setcall sz ftell(file)
-    if sz==-1
+    if sz=-1
         str ftellerr="File tell error"
         call texter(ftellerr)
     endif
@@ -116,7 +116,7 @@ function file_tell(sd file)
 endfunction
 #bool
 function file_read(sd file,sd mem,sd size)
-    import "fread" fread
+    importx "_fread" fread
     sd read
     setcall read fread(mem,1,size,file)
     if read!=size
@@ -127,18 +127,18 @@ function file_read(sd file,sd mem,sd size)
     return (TRUE)
 endfunction
 import "dialog_message_format" dialog_message_format
-import "_get_errno" get_errno
+importx "__get_errno" get_errno
 #bool
 function mkdir_message_on_exist(ss dirname)
     import "_mkdir" mkdir
     sd int
     setcall int mkdir(dirname)
-    if int==0
+    if int=0
         return (TRUE)
     endif
     sd errno
     call get_errno(#errno)
-    if errno==(EEXIST)
+    if errno=(EEXIST)
         sd bool
         setcall bool dialog_message_format("Folder '%s' already exists.Use this folder?",dirname)
         return bool
@@ -157,7 +157,7 @@ function file_open_overwrite(ss filename)
     else
         setcall bool file_open_overwrite_test(file)
     endelse
-    if bool==(FALSE)
+    if bool=(FALSE)
         return 0
     endif
     setcall file file_open(filename,"wb")
@@ -167,7 +167,7 @@ endfunction
 function file_open_overwrite_test()
     sd errno
     call get_errno(#errno)
-    if errno==(ENOENT)
+    if errno=(ENOENT)
         return (TRUE)
     endif
     return (FALSE)

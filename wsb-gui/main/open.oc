@@ -40,7 +40,7 @@ function open_last_com(sd mem,sd size)
     import "proj_set" proj_set
     ss filename
     setcall filename proj_set(folder_name,name_string)
-    if filename==0
+    if filename=0
         return (void)
     endif
     import "file_get_content_forward_data" file_get_content_forward_data
@@ -70,9 +70,9 @@ function get_recent_path()
     setcall name get_data_folder_file(r)
     return name
 endfunction
-import "strlen" strlen
+importx "_strlen" strlen
 import "file_write" file_write
-import "fclose" fclose
+importx "_fclose" fclose
 function write_last_site_opened(sd paths)
     ss folder
     ss projname
@@ -85,7 +85,7 @@ function write_last_site_opened(sd paths)
     ss w="wb"
     sd file
     setcall file file_open(name,w)
-    if file==0
+    if file=0
         return (void)
     endif
     sd len
@@ -93,7 +93,7 @@ function write_last_site_opened(sd paths)
     inc len
     sd bool
     setcall bool file_write(file,folder,len)
-    if bool==(TRUE)
+    if bool=(TRUE)
         setcall len strlen(projname)
         inc len
         call file_write(file,projname,len)
