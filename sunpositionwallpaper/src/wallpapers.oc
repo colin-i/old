@@ -26,7 +26,7 @@ import "actions" actions
 
 #e method 0,void 1
 function wallpapers_action(sd method,sd arg1,sd arg2)
-if method==0
+if method=0
     sd mem
     sd size
     set mem arg1
@@ -46,7 +46,7 @@ if method==0
     data night_start#1
     data UTCmidnight#1
 
-    chars a_time#20
+    char a_time#20
     ss time_str^a_time
     if size>19
         str impropertime="Unrecognized time value: "
@@ -81,11 +81,11 @@ if method==0
     import "texter_warning" texter_warning
 
     #time
-    if timesindex==1
+    if timesindex=1
         data ptr_t^timevalue
         sd bool
         setcall bool strtoint_positive(time_str,ptr_t)
-        if bool==0
+        if bool=0
             return (error)
         endif
 
@@ -102,7 +102,7 @@ if method==0
         add UTCmidnight_val add
         sd ptr_UTCmidnight_val^UTCmidnight_val
         setcall tm gmtime(ptr_UTCmidnight_val)
-        if tm==0
+        if tm=0
             call texter_warning(gmtimeerr)
             return gmtimeerr
         endif
@@ -125,7 +125,7 @@ if method==0
 
         #set the tm struct for times
         setcall tm gmtime(ptr_t)
-        if tm==0
+        if tm=0
             call texter_warning(gmtimeerr)
             return gmtimeerr
         endif
@@ -141,7 +141,7 @@ if method==0
         return (noerror)
     else
     #key times
-        chars sep=":"
+        char sep=":"
         sd sz
 
         setcall sz valinmem(time_str,size,sep)
@@ -156,7 +156,7 @@ if method==0
 
         #H
         setcall bool strtoint_positive(time_str,ptr_H)
-        if bool==0
+        if bool=0
             return (error)
         endif
         if H>=24
@@ -168,7 +168,7 @@ if method==0
         #M
         add time_str sz
         sub size sz
-        if size==0
+        if size=0
             str minutesexp="Minutes expected"
             call texter_warning(minutesexp)
             return minutesexp
@@ -176,7 +176,7 @@ if method==0
         inc time_str
         dec size
         setcall bool strtoint_positive(time_str,ptr_M)
-        if bool==0
+        if bool=0
             return (error)
         endif
         if M>=60
@@ -188,11 +188,11 @@ if method==0
         set tm_hr# H
         set tm_min# M
 
-        if timesindex==2
+        if timesindex=2
             setcall morning_start mktime(tm)
-        elseif timesindex==3
+        elseif timesindex=3
             setcall day_start mktime(tm)
-        elseif timesindex==4
+        elseif timesindex=4
             setcall evening_start mktime(tm)
         else
             setcall night_start mktime(tm)
@@ -200,11 +200,11 @@ if method==0
 
         return (noerror)
     endelse
-elseif method==1
+elseif method=1
 #0 for not relaunching the timeout
-    if timevalue==UTCmidnight
+    if timevalue=UTCmidnight
         setcall bool actions(5)
-        if bool==0
+        if bool=0
             import "_gtk_main_quit" gtk_main_quit
             call gtk_main_quit()
         endif
@@ -230,7 +230,7 @@ elseif method==1
             call actions(6,0)
         else
             setcall bool actions(5)
-            if bool==0
+            if bool=0
                 call gtk_main_quit()
             endif
             return 0
@@ -265,7 +265,7 @@ else
     sub nexttime currenttime
 
     import "texter" texter
-    chars spacedata#100
+    char spacedata#100
     str spaces^spacedata
     str format_spc="%s: %u hours, %u minutes and %u seconds"
 
@@ -281,19 +281,19 @@ else
     div hr (60*60)
 
     ss trail
-    if timevalue==morning_start
+    if timevalue=morning_start
         ss trailmr="Civil Twilight Start"
         set trail trailmr
-    elseif timevalue==day_start
+    elseif timevalue=day_start
         ss traild="Sun Rise"
         set trail traild
-    elseif timevalue==evening_start
+    elseif timevalue=evening_start
         ss trails="Sun Set"
         set trail trails
-    elseif timevalue==night_start
+    elseif timevalue=night_start
         ss trailn="Civil Twiligth End"
         set trail trailn
-    elseif timevalue==UTCmidnight
+    elseif timevalue=UTCmidnight
         ss trailmd="UTC Midnight"
         set trail trailmd
     else
@@ -315,7 +315,7 @@ function wallpapers_times(sd mem,sd size)
 endfunction
 
 #e
-function iterate_mem_size_separator_forward(sd mem,sd size,ss separator,sd forward)
+function iterate_mem_size_separator_forward(sd mem,sd size,ss separator,sv forward)
     sd bool=1
     sd err
     while bool!=0
@@ -327,7 +327,7 @@ function iterate_mem_size_separator_forward(sd mem,sd size,ss separator,sd forwa
         endif
         add mem sz
         sub size sz
-        if size==0
+        if size=0
             set bool 0
         else
             inc mem

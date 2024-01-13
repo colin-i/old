@@ -1,0 +1,25 @@
+
+items=( file main net numbers obj operations tray visual wallpapers )
+for var in "${items[@]}"; do
+	if [ -z "${1}" ]; then
+		a="o ${var}.oc inplace_reloc 0"
+		echo ${a}
+		${a} || exit 1
+	else
+		a+=" ${var}.o"
+	fi
+	b+=" ${var}.oc.log"
+done
+c="../spw.exe"
+if [ -z "${1}" ]; then
+	b="ounused${b}"
+	echo ${b}
+	b=`${b}`
+	b="i686-w64-mingw32-gcc-win32 ${b} -o ${c} -L`echo ~`/.wine/drive_c/gstreamer-sdk/0.10/x86/lib/ -lgtk-win32-2.0 -lgobject-2.0 -lglib-2.0 -lgdk_pixbuf-2.0 -lgdk-win32-2.0 -lsoup-2.4"
+	echo ${b}
+	${b}
+else
+	rm -f ${a}
+	rm -f ${b}
+	rm -f ${c}
+fi

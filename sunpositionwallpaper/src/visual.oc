@@ -85,7 +85,7 @@ function actions(sd mod,sd arg1,sd arg2)
 
     data ptr_allok%ptr_allok
 #initialize default values
-if mod==0
+if mod=0
     str default_coord="1"
     set lat_zone 0
     set lat_degrees default_coord
@@ -109,7 +109,7 @@ if mod==0
     return 1
 endif
 #read values from file
-if mod==1
+if mod=1
     sd mem
     sd size
     set mem arg1
@@ -130,7 +130,7 @@ if mod==1
         return 0
     endif
 
-    chars lat_degrees_chars#size_of_degrees_lat
+    char lat_degrees_chars#size_of_degrees_lat
     data lat_degrees_size=size_of_degrees_lat
     str lat_degrees_str^lat_degrees_chars
     setcall err get_str_advance(lat_degrees_str,lat_degrees_size,mem_sz)
@@ -139,7 +139,7 @@ if mod==1
     endif
     set lat_degrees lat_degrees_str
 
-    chars lat_minutes_chars#size_of_minutes
+    char lat_minutes_chars#size_of_minutes
     str lat_minutes_str^lat_minutes_chars
     setcall err get_str_advance(lat_minutes_str,minutes_size,mem_sz)
     if err!=(noerror)
@@ -153,7 +153,7 @@ if mod==1
         return 0
     endif
 
-    chars lg_degrees_chars#size_of_degrees_long
+    char lg_degrees_chars#size_of_degrees_long
     data lg_degrees_size=size_of_degrees_long
     str lg_degrees_str^lg_degrees_chars
     setcall err get_str_advance(lg_degrees_str,lg_degrees_size,mem_sz)
@@ -162,7 +162,7 @@ if mod==1
     endif
     set lg_degrees lg_degrees_str
 
-    chars lg_minutes_chars#size_of_minutes
+    char lg_minutes_chars#size_of_minutes
     str lg_minutes_str^lg_minutes_chars
     setcall err get_str_advance(lg_minutes_str,minutes_size,mem_sz)
     if err!=(noerror)
@@ -176,7 +176,7 @@ if mod==1
         return 0
     endif
 
-    chars off_hours_chars#size_of_hours
+    char off_hours_chars#size_of_hours
     str off_hours_str^off_hours_chars
     data size_of_hours=size_of_hours
     setcall err get_str_advance(off_hours_str,size_of_hours,mem_sz)
@@ -186,7 +186,7 @@ if mod==1
     set off_hours off_hours_str
 
     #wallpapers
-    chars morning_chars#MAX_PATH
+    char morning_chars#MAX_PATH
     str morning_str^morning_chars
     setcall err get_str_advance(morning_str,(MAX_PATH),mem_sz)
     if err!=(noerror)
@@ -194,7 +194,7 @@ if mod==1
     endif
     set twilight_start morning_str
     #
-    chars day_chars#MAX_PATH
+    char day_chars#MAX_PATH
     str day_str^day_chars
     setcall err get_str_advance(day_str,(MAX_PATH),mem_sz)
     if err!=(noerror)
@@ -202,7 +202,7 @@ if mod==1
     endif
     set sun_rise day_str
     #
-    chars evening_chars#MAX_PATH
+    char evening_chars#MAX_PATH
     str evening_str^evening_chars
     setcall err get_str_advance(evening_str,(MAX_PATH),mem_sz)
     if err!=(noerror)
@@ -210,7 +210,7 @@ if mod==1
     endif
     set sun_set evening_str
     #
-    chars night_chars#MAX_PATH
+    char night_chars#MAX_PATH
     str night_str^night_chars
     setcall err get_str_advance(night_str,(MAX_PATH),mem_sz)
     if err!=(noerror)
@@ -219,7 +219,7 @@ if mod==1
     set twilight_end night_str
     ##
     const MAX_URI=512
-    chars uri_chars#MAX_URI
+    char uri_chars#MAX_URI
     str uri_str^uri_chars
     setcall err get_str_advance(uri_str,(MAX_URI),mem_sz)
     if err!=(noerror)
@@ -238,7 +238,7 @@ if mod==1
     return 1
 endif
 #values to fields
-if mod==2
+if mod=2
     sd vbox
     sd dialog
     set vbox arg1
@@ -456,7 +456,7 @@ if mod==2
     import "_gtk_toggle_button_set_active" gtk_toggle_button_set_active
 
     #
-    if lat_zone==0
+    if lat_zone=0
         call gtk_toggle_button_set_active(lat_radio_n,1)
     else
         call gtk_toggle_button_set_active(lat_radio_s,1)
@@ -464,7 +464,7 @@ if mod==2
     call gtk_entry_set_text(lat_d,lat_degrees)
     call gtk_entry_set_text(lat_m,lat_minutes)
     #
-    if lg_zone==0
+    if lg_zone=0
         call gtk_toggle_button_set_active(lg_radio_n,1)
     else
         call gtk_toggle_button_set_active(lg_radio_s,1)
@@ -472,7 +472,7 @@ if mod==2
     call gtk_entry_set_text(lg_d,lg_degrees)
     call gtk_entry_set_text(lg_m,lg_minutes)
     #
-    if off_zone==0
+    if off_zone=0
         call gtk_toggle_button_set_active(off_radio_e,1)
     else
         call gtk_toggle_button_set_active(off_radio_w,1)
@@ -485,7 +485,7 @@ if mod==2
     call gtk_entry_set_text(ctwlightend,twilight_end)
     call gtk_entry_set_text(scripturi,uri)
     #
-    if skipvalue==0
+    if skipvalue=0
         call gtk_toggle_button_set_active(skip_radio_no,1)
     else
         call gtk_toggle_button_set_active(skip_radio_yes,1)
@@ -494,7 +494,7 @@ if mod==2
     return 1
 endif
 #write to file for storing causes
-if mod==3
+if mod=3
     sd file
     set file arg1
     import "_gtk_toggle_button_get_active" gtk_toggle_button_get_active
@@ -507,7 +507,7 @@ if mod==3
 
     #lat
     setcall bool gtk_toggle_button_get_active(lat_radio_n)
-    if bool==1
+    if bool=1
         set lat_zone 0
     else
         set lat_zone 1
@@ -534,7 +534,7 @@ if mod==3
     endif
     #long
     setcall bool gtk_toggle_button_get_active(lg_radio_n)
-    if bool==1
+    if bool=1
         set lg_zone 0
     else
         set lg_zone 1
@@ -561,7 +561,7 @@ if mod==3
     endif
     #off
     setcall bool gtk_toggle_button_get_active(off_radio_e)
-    if bool==1
+    if bool=1
         set off_zone 0
     else
         set off_zone 1
@@ -619,7 +619,7 @@ if mod==3
     endif
     #skip settings
     setcall bool gtk_toggle_button_get_active(skip_radio_no)
-    if bool==1
+    if bool=1
         set skipvalue 0
     else
         set skipvalue 1
@@ -633,9 +633,9 @@ if mod==3
     set ptr_allok# 1
     return 1
 endif
-if mod==4
+if mod=4
     #prepare get times
-    chars senddata#MAX_URI+dword_null+1+2+2+1+2+2+1+2+50
+    char senddata#MAX_URI+dword_null+1+2+2+1+2+2+1+2+50
     str sends^senddata
     str sendformat="%s?lat=%s%s.%u&long=%s%s.%u&offset=%s%s"
     str negative="-"
@@ -650,17 +650,17 @@ if mod==4
     #lat sign
     ss lat_sign
     set lat_sign positive
-    if lat_zone==1
+    if lat_zone=1
         set lat_sign negative
     endif
     #lat degrees check
     setcall bool strtoint_positive(lat_degrees,ptr_out)
-    if bool==0
+    if bool=0
         return 0
     endif
     #lat minutes check and convert
     setcall bool strtoint_positive_minutes_to_decimal(lat_minutes,ptr_out)
-    if bool==0
+    if bool=0
         return 0
     endif
     sd decimal_lat
@@ -668,17 +668,17 @@ if mod==4
     #long sign
     ss lg_sign
     set lg_sign positive
-    if lg_zone==0
+    if lg_zone=0
         set lg_sign negative
     endif
     #long degrees check
     setcall bool strtoint_positive(lg_degrees,ptr_out)
-    if bool==0
+    if bool=0
         return 0
     endif
     #long minutes check and convert
     setcall bool strtoint_positive_minutes_to_decimal(lg_minutes,ptr_out)
-    if bool==0
+    if bool=0
         return 0
     endif
     sd decimal_lg
@@ -686,12 +686,12 @@ if mod==4
     #offset sign
     ss off_sign
     set off_sign positive
-    if off_zone==0
+    if off_zone=0
         set off_sign negative
     endif
     #offset hours check
     setcall bool strtoint_positive(off_hours,ptr_out)
-    if bool==0
+    if bool=0
         return 0
     endif
 
@@ -702,7 +702,7 @@ if mod==4
     set ptr_allok# 1
     return 1
 endif
-if mod==5
+if mod=5
 #bool return in this case
 #call
     import "uri_get_content_forward" uri_get_content_forward
@@ -718,17 +718,17 @@ if mod==5
     #all times are ok
     return 1
 endif
-#if mod==6
+#if mod=6
 #set wallpaper
     sd index
     set index arg1
 
     sd wallpaperlocation
-    if index==0
+    if index=0
         set wallpaperlocation twilight_end
-    elseif index==1
+    elseif index=1
         set wallpaperlocation twilight_start
-    elseif index==2
+    elseif index=2
         set wallpaperlocation sun_rise
     else
         set wallpaperlocation sun_set
@@ -739,7 +739,7 @@ endif
     import "texter_warning" texter_warning
 
     setcall bool SystemParametersInfo((SPI_SETDESKWALLPAPER),0,wallpaperlocation,(SPIF_UPDATEINIFILE))
-    if bool==0
+    if bool=0
         str cannotsetwallpaper="Could not set a wallpaper"
         call texter_warning(cannotsetwallpaper)
         return cannotsetwallpaper
@@ -781,7 +781,7 @@ function prelaunch_calls()
 
     set ptr_allok# 0
     call actions(4)
-    if ptr_allok#==0
+    if ptr_allok#=0
         return 0
     endif
 
@@ -796,14 +796,14 @@ function prelaunch()
 
     set ptr_allok# 0
     call writes()
-    if ptr_allok#==0
+    if ptr_allok#=0
         return 0
     endif
 
     #read action has size verifications
     set ptr_allok# 0
     call reads()
-    if ptr_allok#==0
+    if ptr_allok#=0
         return 0
     endif
 

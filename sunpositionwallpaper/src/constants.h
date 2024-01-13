@@ -31,7 +31,7 @@ const stringstring=1
 const INVALID_HANDLE=-1
 
 Const SEEK_SET=0
-Const SEEK_CUR=1
+#Const SEEK_CUR=1
 Const SEEK_END=2
 
 
@@ -58,4 +58,4 @@ const GTK_MESSAGE_WARNING=1
 
 
 
-Const GDK_BUTTON_PRESS_MASK=0x80
+#Const GDK_BUTTON_PRESS_MASK=0x80

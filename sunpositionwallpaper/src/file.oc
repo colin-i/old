@@ -16,8 +16,8 @@ Function memoryrealloc(data ptrpointer,data size)
         import "_realloc" realloc
         SetCall newpointer realloc(oldpointer,size)
         Data null=NULL
-        If newpointer==null
-                Chars newmem="Realloc failed with error: "
+        If newpointer=null
+                char newmem="Realloc failed with error: "
                 str pnewmem^newmem
                 call strerrno(pnewmem)
                 Return pnewmem
@@ -62,7 +62,7 @@ function Scriptfullpath(data ptrfullpath)
     endif
     data size#1
     setcall size GetModuleFileName(null,ptrfullpath#,MAX_PATH)
-    if size==null
+    if size=null
         str e="Error."
         call texter_warning(e)
         return e
@@ -73,20 +73,20 @@ endfunction
 
 #e
 function slen_s(ss str,sd size,sd ptrszout)
-    Chars term={0}
-    Chars byte={0}
+    char term={0}
+    char byte={0}
     Data zero=0
     data one=1
     sd loop
 
     set ptrszout# size
     set loop one
-    while loop==one
-        if size==zero
+    while loop=one
+        if size=zero
             set loop zero
         else
             Set byte str#
-            if byte==term
+            if byte=term
                 set loop zero
             else
                 Inc str
@@ -95,7 +95,7 @@ function slen_s(ss str,sd size,sd ptrszout)
         endelse
     endwhile
     sub ptrszout# size
-    if size==zero
+    if size=zero
         str er="String null termination expected."
         call texter_warning(er)
         return er
@@ -123,22 +123,22 @@ function strvaluedisp(str text,data part2,data formattype)
     data su=stringUinteger
 
     const infomax=200
-    chars disp#infomax
+    char disp#infomax
     str display^disp
 
     data max=infomax
     data truncation#1
     data notruncation=0
     data dword=4
-    chars truncdata="..."
+    char truncdata="..."
     data truncdots^truncdata
 
     set truncation notruncation
 
     str format#1
-    if formattype==si
+    if formattype=si
         set format int
-    elseif formattype==su
+    elseif formattype=su
         set format uint
     else
         set format str
@@ -195,15 +195,15 @@ endfunction
 import "_free" free
 
 #true if match or false
-Function filepathdelims(chars chr)
-        Chars bslash="\\"
-        Chars slash="/"
+Function filepathdelims(char chr)
+        char bslash="\\"
+        char slash="/"
         Data true=TRUE
         Data false=FALSE
-        If chr==bslash
+        If chr=bslash
                 Return true
         EndIf
-        If chr==slash
+        If chr=slash
                 Return true
         EndIf
         Return false
@@ -230,10 +230,10 @@ Function endoffolders(str path)
         Set cursor max
 
         While endfolders<cursor
-                Chars chr={0}
+                char chr={0}
                 Set chr cursor#
                 SetCall bool filepathdelims(chr)
-                If bool==true
+                If bool=true
                         Set endfolders cursor
                 EndIf
                 If endfolders<cursor
@@ -256,7 +256,7 @@ function movetoScriptfolder()
     endif
 
     data pointer#1
-    chars z=0
+    char z=0
     setcall pointer endoffolders(path)
     set pointer# z
 
@@ -281,7 +281,7 @@ Function openfile(data pfile,str path,str fmode)
         data null=0
         import "_fopen" fopen
         SetCall pfile# fopen(path,fmode)
-        If pfile#==null
+        If pfile#=null
             str err="Cannot open a file. Error: "
             call strerrno(err)
             return err
@@ -293,7 +293,7 @@ EndFunction
 ##forward simple
 
 #err/returns what forward returns
-function file_forward(ss path,sd method,sd forward)
+function file_forward(ss path,sd method,sv forward)
     sd returnvalue
     data noerr=noerror
     sd file
@@ -335,7 +335,7 @@ function file_length(sd file,sd ptr_size)
     import "_ftell" ftell
     setcall ptr_size# ftell(file)
     data INVALID_HANDLE=INVALID_HANDLE
-    if ptr_size#==INVALID_HANDLE
+    if ptr_size#=INVALID_HANDLE
         str ftellerr="File tell error: "
         call strerrno(ftellerr)
         return ftellerr
@@ -409,7 +409,7 @@ function file_get_content(str path,data ptrsize,data ptrmem)
     return err
 EndFunction
 
-function file_get_content_forward(ss filename,sd forward)
+function file_get_content_forward(ss filename,sv forward)
     sd err
     sd noerr=noerror
 
@@ -433,7 +433,7 @@ endfunction
 function file_write(sd buffer,sd size,sd file)
     data z=0
     data noe=noerror
-    if size==z
+    if size=z
         return noe
     endif
     data byte=1
@@ -457,7 +457,7 @@ endfunction
 import "mainwidget" mainwidget
 import "_gtk_file_chooser_dialog_new" gtk_file_chooser_dialog_new
 import "_gtk_dialog_run" gtk_dialog_run
-function filechooserfield_forward_data(sd forward,sd data)
+function filechooserfield_forward_data(sv forward,sd data)
     str sel_file="Select File"
     sd main
     setcall main mainwidget()
@@ -471,7 +471,7 @@ function filechooserfield_forward_data(sd forward,sd data)
     setcall dialog gtk_file_chooser_dialog_new(sel_file,main,open,GTK_STOCK_CANCEL,responsecancel,GTK_STOCK_OPEN,responseaccept,null)
     sd resp
     setcall resp gtk_dialog_run(dialog)
-    if resp==responseaccept
+    if resp=responseaccept
         ss file
         import "_gtk_file_chooser_get_filename_utf8" gtk_file_chooser_get_filename
         setcall file gtk_file_chooser_get_filename(dialog)

@@ -6,7 +6,7 @@ format elfobj
 
 include "constants.h"
 
-function _start(sd *argc,sd *argv)
+functionx _WinMain@16()
     import "_gtk_init" gtk_init
     call gtk_init((NULL),(NULL))
 
@@ -23,22 +23,22 @@ function _start(sd *argc,sd *argv)
     data settings_tray#1
     const ptr^settings_tray
     set settings_tray 1
-    while settings_tray==1
+    while settings_tray=1
         #read values from file
         import "reads" reads
         call reads()
 
         sd skipvalue=0
 
-        if settings_clicked==0
+        if settings_clicked=0
             import "getskipvalue" getskipvalue
             setcall skipvalue getskipvalue()
 
             data bool#1
-            if skipvalue==1
+            if skipvalue=1
                 import "prelaunch_calls" prelaunch_calls
                 setcall bool prelaunch_calls()
-                if bool==0
+                if bool=0
                     set skipvalue 0
                 endif
             endif
@@ -46,7 +46,7 @@ function _start(sd *argc,sd *argv)
             set settings_clicked 0
         endelse
 
-        if skipvalue==0
+        if skipvalue=0
             str programname="Sun Position Wallpaper"
             str GTK_STOCK_OK="gtk-ok"
             str GTK_STOCK_EXIT="gtk-quit"
@@ -70,7 +70,7 @@ function _start(sd *argc,sd *argv)
             setcall response gtk_dialog_run(dialog)
 
             import "_gtk_widget_destroy" gtk_widget_destroy
-            if response==(GTK_RESPONSE_OK)
+            if response=(GTK_RESPONSE_OK)
                 import "prelaunch" prelaunch
                 setcall bool prelaunch()
 
@@ -82,7 +82,7 @@ function _start(sd *argc,sd *argv)
             endelse
         endif
 
-        if bool==1
+        if bool=1
             import "tray" tray
             sd trayicon
             setcall trayicon tray(programname)

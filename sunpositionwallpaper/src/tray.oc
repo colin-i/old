@@ -103,7 +103,7 @@ endfunction
 
 function closepopup(sd ncode,sd wParam,sd lParam)
     import "_CallNextHookEx@16" CallNextHookEx
-    if wParam==0x0201
+    if wParam=0x0201
         import "_UnhookWindowsHookEx@4" UnhookWindowHookEx
         data hook#1
         const ptr_hook^hook
@@ -113,7 +113,7 @@ function closepopup(sd ncode,sd wParam,sd lParam)
         setcall menu getpopuphandle()
         if menu!=0
             data p%ptr_sel_desel
-            if p#==1
+            if p#=1
                 call uninit_popup()
             endif
         endif
@@ -135,7 +135,7 @@ function popup(sd *statusicon,sd button,sd activate_time,sd *data)
     data close^closepopup
     data p_hk%ptr_hook
     setcall p_hk# SetWindowsHookEx(14,close,0,0)
-    if p_hk#==0
+    if p_hk#=0
         str errh="Hook error"
         import "texter_warning" texter_warning
         call texter_warning(errh)

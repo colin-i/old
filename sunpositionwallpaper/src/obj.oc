@@ -83,18 +83,18 @@ function pixbuf_from_file(ss filename)
 
     import "_gdk_pixbuf_new_from_file_utf8" gdk_pixbuf_new_from_file
     setcall pixbuf gdk_pixbuf_new_from_file(filename,ptrgerror)
-    if pixbuf==null
+    if pixbuf=null
             call gerrtoerr(ptrgerror)
             return null
     endif
     return pixbuf
 endfunction
 #returns the forward or null
-function pixbuf_from_file_forward_data(ss filename,sd forward,sd data)
+function pixbuf_from_file_forward_data(ss filename,sv forward,sd data)
     sd pixbuf
     setcall pixbuf pixbuf_from_file(filename)
     sd null=0
-    if pixbuf==null
+    if pixbuf=null
         return null
     endif
     sd ret
@@ -138,14 +138,14 @@ function table_add_row_allCol(sd table,sd row,sd allCol)
 
     sd c=0
     sd col
-    if allCol==true
+    if allCol=true
         set col columns
     else
         set col firstcol
     endelse
     sd add
     set add true
-    while add==true
+    while add=true
         import "_gtk_table_attach_defaults" gtk_table_attach_defaults
         call gtk_table_attach_defaults(table,row#,c,col,lastrow,rows)
         add row dword

@@ -2,9 +2,9 @@
 format elfobj
 
 #bool numeric
-Function numeric(chars c)
-        Chars zero="0"
-        Chars nine="9"
+Function numeric(char c)
+        char zero="0"
+        char nine="9"
         Data false=0
         Data true=1
         If c<zero
@@ -17,7 +17,7 @@ EndFunction
 
 #bool
 Function memtoint(str content,data size,data outvalue)
-        if size==0
+        if size=0
             return 0
         endif
 
@@ -25,16 +25,16 @@ Function memtoint(str content,data size,data outvalue)
         Data negative=-1
         Data sign=1
         Data zero=0
-        Chars negsign="-"
-        Chars byte={0}
+        char negsign="-"
+        char byte={0}
 
         Set sign positive
         Set byte content#
-        If byte==negsign
+        If byte=negsign
                 Set sign negative
                 Inc content
                 Dec size
-                If size==zero
+                If size=zero
                         Return zero
                 EndIf
         EndIf
@@ -42,7 +42,7 @@ Function memtoint(str content,data size,data outvalue)
         Data value#1
         Data coef#1
         Data bool#1
-        Chars asczero="0"
+        char asczero="0"
 
         Set value zero
         Set coef zero
@@ -51,7 +51,7 @@ Function memtoint(str content,data size,data outvalue)
                 Dec content
                 Set byte content#
                 SetCall bool numeric(byte)
-                If bool==zero
+                If bool=zero
                         Return zero
                 EndIf
                 Sub byte asczero
@@ -83,7 +83,7 @@ Function memtoint(str content,data size,data outvalue)
                 Add value number
                 If value<vlNr
                 #overflow
-                        If sign==positive
+                        If sign=positive
                             #set the out value in case a dword
                             #between 0x80..00 and 0xff..ff is expected
                             Set outvalue# value
@@ -99,7 +99,7 @@ Function memtoint(str content,data size,data outvalue)
                 Inc coef
                 Dec size
         EndWhile
-        If sign==negative
+        If sign=negative
                 #check for 0x80..00,-2147483648
                 If value>zero
                         Data negvalue=0
@@ -130,7 +130,7 @@ function strtoint_positive(ss str,sd ptr_out)
     sd bool
     setcall bool strtoint(str,ptr_out)
     str posint="Positive integer number expected"
-    if bool==0
+    if bool=0
         call texter_warning(posint)
         return 0
     endif
@@ -145,7 +145,7 @@ endfunction
 function strtoint_positive_minutes_to_decimal(ss str,sd ptr_out)
     sd bool
     setcall bool strtoint_positive(str,ptr_out)
-    if bool==0
+    if bool=0
         return 0
     endif
     str minutesexpected="Minutes number from [0,59] expected"
