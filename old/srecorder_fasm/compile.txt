@@ -1,0 +1,8 @@
+
+
+
+This program can be compiled with FASM from http://flatassembler.net
+
+
+"srecorder.asm" is the dll and "s_recorder.asm" is the executable
+These two form the program

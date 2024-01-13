@@ -1,0 +1,3 @@
+
+#from site from the .zip file, INCLUDE and FASM.exe
+wine ../FASM.exe 'sound recorder.asm'

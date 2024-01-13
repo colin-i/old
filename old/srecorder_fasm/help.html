@@ -1,0 +1,106 @@
+<html>
+	<head><title>S Recorder</title></head>
+	<body>
+		<h1>Screen Recorder</h1>
+		<p>
+			S Recorder is a tool for capturing the screen. The program is available in open source package or binary package. The program runs on Windows OS.
+			This is a 32 bit version.
+			<br>
+			It can makes compressed videos if <a target="_blank" href="http://www.xvid.org">xvid</a> Video for Windows codec is available at the system.
+			Many more codecs can be available at another version.
+			Uncompressed videos are also supported.
+			<br>
+			The capture procedure is designed to eliminate the duplicate frames so if a high number of frames per second is selected and on the screen
+			isn't activity, the many duplicate frames aren't included. For this purpouse, a variable frame rate container
+			was used in the program: "Matroska Video". To stop the capture it uses a selected stop key (or the default one).
+			<br>
+			The capture goes to a temporarry file and then is arranged at the end in the mkv file. The bit depth used is truecolor which is 24 bits/pixel.
+			<br>
+			Other program features:<br>
+			1. It has a delay between start of the command and start of the capture.<br>
+			2. The frame per second period can be adjusted from 1 to a maximum of 32 frames per second.<br>
+			3. The screen is recorded based on coordinates: left,right,tob,bottom.
+		</p>
+		<p>
+			The program has a help command, a codec command and the record command.<br>
+			A beep is played when the capture start and when the stop key is pressed.<br>
+			To start the capture a "s_recorder r" command will use the default values, but the program has 10 more optional arguments.<br>
+			The record command optional arguments are:<br>
+			1. -output_file (default, time since 1 Jan 1970)<br>
+			2. -temporary_file (default, same, +1 sec if both)<br>
+			3. -delay (a number from 0 to 9, default 6)<br>
+			4. -stop_key (alphanumeric key only, default 'S')<br>
+			5. -fps (a number from 1 to 32, default 25)<br>
+			6. -left (32-9000, lower than right, default 0)<br>
+			7. -right (32-9000, greater than left, default 1024)<br>
+			8. -top (32-9000, lower than bottom, default 0)<br>
+			9. -bottom (32-9000, greater than top, default 768)<br>
+			10.-FOURCC_identifier (uncompressed if skipped)<br>
+			Example: s_recorder.exe r -delay 3 -temporary_file "c:\temp files\temp00" -output_file newvideo -stop_key X -fps 32 -left 100 -right 1000 -bottom 700 -FOURCC_identifier xvid
+		</p>
+		<p></p>
+		<p>The dynamic link library has two functions:<br></p>
+		<p>
+			1. query<br>
+			Arguments:<br>
+			a. an array pointer pointer (the dll create the array with the codecs and place the array pointer into this locations)<br>
+			Return value: eax: the number of elements
+		</p>
+		<p>
+			2. capture<br>
+			Arguments:<br>
+			a. pointer to MAIN_STRUCT<br>
+			b. pointer to a dword (for total frames)<br>
+		        <i>The dll can receive a pointer where to write the total number of frames.
+			At the begining, the events needs to be unsignaled. After that the event handle 1 can be used in the program.
+			The event handle 1 is signaled when a frame was written on the drive. Then the dll waits for the program to signal the event handle 2.
+			Then the dll resets the event handle 2 and the cycle goes until the last frame was written.
+			The application needs to have the same behavior: waits for event 1, reset event 1, do whatever, signal event 2, and so on..
+			The application function for this in source files is "threadproc" and in the dll it is located ïn the "capture" function
+			when it ends to write a frame.<br>
+			The application can display the progress frame by frame using this behaviour.<br></i>
+		        c. event handle 1 (ignored if pointer to a dword = NULL)<br>
+		        d. event handle 2 (ignored if pointer to a dword = NULL)<br>
+			Return value:<br>
+			eax:<br>
+			0 Success<br>
+			1 Output file already exist<br>
+			2 Cannot open output file<br>
+			3 Stop key isn't alphanumeric<br>
+			4 Frames per second isn't from 1 to 32<br>
+			5 Cannot open the codec<br>
+			6 Cannot open the temporary file<br>
+			7 Cannot write to output file<br>
+			8 Cannot allocate memory<br>
+			9 Wrong coordinates<br>
+			10 Cannot write to temporary file<br>
+			11 Cannot create a device context<br>
+			12 Cannot create a dib section<br>
+			13 Cannot add a windows hook<br>
+			14 Cannot initialize the compressor<br>
+			edx (if a warning was detected):<br>
+			0 No warning<br>
+			1 RegOpenKeyEx failed<br>
+			2 RegGetValue for num_zones failed<br>
+			3 RegGetValue for first zone%u_frame failed<br>
+			4 RegSetValueEx for zone.. failed<br>
+			5 RegGetValue for profile data failed<br>
+			6 RegSetValueEx for profile data failed at starting code<br>
+			7 RegSetValueEx for profile data failed at ending code
+		</p>
+		<p>
+			The MAIN_STRUCT is a block of data as follows:<br>
+			DWORD: pointer to the file out string<br>
+			BYTE: overwrite file out (0 is no overwrite, 1 is overwrite)<br>
+			DWORD: pointer to the temporrary file<br>
+			BYTE: delay<br>
+			BYTE: stop_key (Virtual-Key Code)<br>
+			BYTE: frames per second<br>
+			WORD: left<br>
+			WORD: right<br>
+			WORD: top<br>
+			WORD: bottom<br>
+			DWORD:FOURCC_identifier
+		</p>
+	</body>
+</html>

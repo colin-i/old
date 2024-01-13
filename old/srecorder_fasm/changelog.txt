@@ -1,0 +1,15 @@
+
+
+
+1.1.0.2 - July 28 2011
+---------------------
+-maximum path bug fixed
+-capture function writting mkv headers with additional details
+
+1.1.0.1
+---------------------
+-added a safety code for the codec informations in the output file
+
+1.1
+---------------------
+-added more detailed info at the command arguments
