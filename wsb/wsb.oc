@@ -5,9 +5,9 @@ format elfobj
 
 include "wsb.h"
 
-import "printf" printf
-import "fclose" fclose
-import "strlen" strlen
+import "_printf" printf
+import "_fclose" fclose
+import "_strlen" strlen
 
 function log_file()
     data file#1
@@ -28,7 +28,7 @@ function log_set(ss pre_text,ss text)
     call file_write(file_store#,pre_text,sz)
     setcall sz strlen(text)
     call file_write(file_store#,text,sz)
-    chars nl={0xd,0xa}
+    char nl={0xd,0xa}
     call file_write(file_store#,#nl,2)
 endfunction
 function log_close()
@@ -47,29 +47,29 @@ endfunction
 
 function texter(ss msg)
     call printf(msg)
-    chars nl={0xa,0}
+    char nl={0xa,0}
     call printf(#nl)
-    import "exit" exit
+    import "_exit" exit
     call exit(0)
 endfunction
 
-import "sprintf" sprintf
+import "_sprintf" sprintf
 
 #file
 function file_open(ss filepath,ss method)
-    import "fopen" fopen
+    import "_fopen" fopen
     sd file
     setcall file fopen(filepath,method)
-    If file==0
-        chars info#MAX_PATH+safe_chars_to_add
-        chars *=0
+    If file=0
+        char info#MAX_PATH+safe_chars_to_add
+        char *=0
         call sprintf(#info,"Cannot open a file: %s",filepath)
         call texter(#info)
     EndIf
     return file
 endfunction
 function file_seek(ss file,sd off,sd method)
-    import "fseek" fseek
+    import "_fseek" fseek
     sd seekint
     setcall seekint fseek(file,off,method)
     If seekint!=0
@@ -79,10 +79,10 @@ function file_seek(ss file,sd off,sd method)
 endfunction
 #sz
 function file_tell(sd file)
-    import "ftell" ftell
+    import "_ftell" ftell
     sd sz
     setcall sz ftell(file)
-    if sz==-1
+    if sz=-1
         str ftellerr="File tell error"
         call texter(ftellerr)
     endif
@@ -90,17 +90,17 @@ function file_tell(sd file)
 endfunction
 #mem
 function memalloc(sd sz)
-    import "malloc" malloc
+    import "_malloc" malloc
     sd mem
     SetCall mem malloc(sz)
-    If mem==0
+    If mem=0
         str newmem="Malloc failed"
         call texter(newmem)
     endif
     return mem
 EndFunction
 function file_read(sd file,sd mem,sd size)
-    import "fread" fread
+    import "_fread" fread
     sd read
     setcall read fread(mem,1,size,file)
     if read!=size
@@ -109,13 +109,13 @@ function file_read(sd file,sd mem,sd size)
     endif
 endfunction
 
-import "free" free
+import "_free" free
 
 function file_write(sd file,sd buffer,sd size)
-    if size==0
+    if size=0
         return (void)
     endif
-    import "fwrite" fwrite
+    import "_fwrite" fwrite
     sd len
     setcall len fwrite(buffer,1,size,file)
     if len!=0
@@ -145,7 +145,7 @@ function str_in_mem_bool(ss str,ss mem,sd len,sd p_pos)
     return (TRUE)
 endfunction
 
-import "memcmp" memcmp
+import "_memcmp" memcmp
 #pos where the string is in mem/or all size
 function string_in_mem(ss str,ss mem,sd len,sd p_err)
     set p_err# 0
@@ -162,7 +162,7 @@ function string_in_mem(ss str,ss mem,sd len,sd p_err)
     while i<=lastgood
         sd compare
         setcall compare memcmp(mem,str,sz)
-        if compare==0
+        if compare=0
             return i
         endif
         inc mem
@@ -177,7 +177,7 @@ function dirch_nolog(ss value)
     sd change
     setcall change chdir(value)
     if change!=0
-        import "_get_errno" get_errno
+        import "__get_errno" get_errno
         sd err
         call get_errno(#err)
         if err!=(ENOENT)
@@ -220,14 +220,14 @@ function loop(ss name,sd p_is_template)
     str back=".."
     sd compare
     setcall compare str_compare(back,name)
-    if compare==0
+    if compare=0
         #is back one folder
         call dirch(back)
         return 0
     endif
     str template_end="!"
     setcall compare str_compare(template_end,name)
-    if compare==0
+    if compare=0
         #is template end
         sd templates_data
         setcall templates_data templates()
@@ -236,7 +236,7 @@ function loop(ss name,sd p_is_template)
         while templates_data#!=0
             add templates_data (template_data_size)
         endwhile
-        if templates_data==containers_data
+        if templates_data=containers_data
             call texter("error with the templates end")
         endif
         sub templates_data (template_data_size)
@@ -249,8 +249,8 @@ function loop(ss name,sd p_is_template)
     ss cursor
     set cursor name
     while cursor#!=0
-        chars dot="."
-        if cursor#==dot
+        char dot="."
+        if cursor#=dot
             inc cursor
             sd len
             sd len2
@@ -258,9 +258,9 @@ function loop(ss name,sd p_is_template)
             #
             str dir_nm="dir"
             setcall len strlen(dir_nm)
-            if len==len2
+            if len=len2
                 setcall compare memcmp(cursor,dir_nm,len)
-                if compare==0
+                if compare=0
                     #is a folder name, and the file is index.php from inside the folder
                     dec cursor
                     set cursor# 0
@@ -273,9 +273,9 @@ function loop(ss name,sd p_is_template)
             endif
             str tmpl="container"
             setcall len strlen(tmpl)
-            if len==len2
+            if len=len2
                 setcall compare memcmp(cursor,tmpl,len)
-                if compare==0
+                if compare=0
                     #is container
                     set p_is_template# 1
                 endif
@@ -290,7 +290,7 @@ function loop(ss name,sd p_is_template)
 endfunction
 #filepath
 function src_path(ss filename)
-    chars path#MAX_PATH
+    char path#MAX_PATH
     #
     ss dest
     setcall dest src_folder()
@@ -315,7 +315,7 @@ function src_open(ss filename)
 endfunction
 
 function template_string()
-    chars template="<!-- -->"
+    char template="<!-- -->"
     return #template
 endfunction
 function template_string_length()
@@ -379,7 +379,7 @@ endfunction
 function file_get_content_forward(ss filename,sd forward)
      call file_get_content_forward_data(filename,forward,0)
 endfunction
-function file_get_content_forward_data(ss filename,sd forward,sd data)
+function file_get_content_forward_data(ss filename,sv forward,sd data)
     sd mem
     sd len
     setcall mem file_get_content(filename,#len)
@@ -418,7 +418,7 @@ endfunction
 
 const files_size=100*100
 function files_pointer()
-    chars files#files_size
+    char files#files_size
     return #files
 endfunction
 function files_set(ss mem,sd size)
@@ -427,13 +427,13 @@ function files_set(ss mem,sd size)
     sd nl=0
     set entry mem
     while size!=0
-        if mem#==0xd
+        if mem#=0xd
             set mem# 0
             set nl 1
-        elseif mem#==0xa
+        elseif mem#=0xa
             set mem# 0
             set nl 1
-        elseif nl==1
+        elseif nl=1
             addcall files_size files_set_value(entry,files_size)
             set entry mem
             set nl 0
@@ -441,10 +441,10 @@ function files_set(ss mem,sd size)
         inc mem
         dec size
     endwhile
-    if nl==1
+    if nl=1
         addcall files_size files_set_value(entry,files_size)
     endif
-    if files_size==(files_size)
+    if files_size=(files_size)
         call texter("size limit at last char at files error")
     endif
     ss files
@@ -457,9 +457,9 @@ function files_set_value(ss new_data,sd pos)
     setcall sizer strlen(new_data)
     while sizer!=0
         dec sizer
-        if new_data#==0x9
+        if new_data#=0x9
             inc new_data
-        elseif new_data#==0x20
+        elseif new_data#=0x20
             inc new_data
         else
             set sizer 0
@@ -467,14 +467,14 @@ function files_set_value(ss new_data,sd pos)
     endwhile
     sd new_len
     setcall new_len strlen(new_data)
-    if new_len==0
+    if new_len=0
         #just tabs/spaces on this row
         return 0
     endif
     inc new_len
     #
-    chars comment="#"
-    if new_data#==comment
+    char comment="#"
+    if new_data#=comment
         #a comment row
         return 0
     endif
@@ -495,12 +495,12 @@ endfunction
 
 #true if match or false
 Function filepathdelims(ss str)
-        Chars bslash="\\"
-        Chars slash="/"
-        If str#==bslash
+        char bslash="\\"
+        char slash="/"
+        If str#=bslash
                 Return (TRUE)
         EndIf
-        If str#==slash
+        If str#=slash
                 Return (TRUE)
         EndIf
         Return (FALSE)
@@ -518,10 +518,10 @@ function replacements(sd p_cursor,sd file_out)
     setcall t_str template_string()
     sd pos
     sd bool=1
-    while bool==1
+    while bool=1
         setcall bool str_in_mem_bool(t_str,entry_mem,entry_len,#pos)
         call file_write(file_out,entry_mem,pos)
-        if bool==1
+        if bool=1
             addcall p_cursor# strlen(p_cursor#)
             inc p_cursor#
             #recursive call; the replacement can have it's own replacements
@@ -540,7 +540,7 @@ endfunction
 
 #cursor
 function get_src_dest(ss cursor,sd p_line)
-    if cursor#==0
+    if cursor#=0
         call texter("src/dest files expected")
     endif
     set p_line# cursor
@@ -548,7 +548,7 @@ function get_src_dest(ss cursor,sd p_line)
     while cursor#!=0
         inc cursor
     endwhile
-    while cursor#==0
+    while cursor#=0
         inc cursor
     endwhile
     return cursor
@@ -557,23 +557,23 @@ endfunction
 entry _main(data argc,data argv)
 
 #go to script folder
-import "GetModuleFileNameA" GetModuleFileName
-chars full_path#MAX_PATH
+import "_GetModuleFileNameA@12" GetModuleFileName
+char full_path#MAX_PATH
 sd size
 setcall size GetModuleFileName(0,#full_path,(MAX_PATH))
-if size==0
+if size=0
     call texter("GetModuleFileName Error.")
 endif
 ss pointer
 set pointer #full_path
 add pointer size
 sd bool=FALSE
-while bool==(FALSE)
+while bool=(FALSE)
     dec pointer
     setcall bool filepathdelims(pointer)
-    if bool==(TRUE)
+    if bool=(TRUE)
         set pointer# 0
-    elseif pointer==#full_path
+    elseif pointer=#full_path
         set bool (TRUE)
     endelseif
 endwhile
@@ -609,7 +609,7 @@ while cursor#!=0
     ss filename
     setcall filename loop(cursor,#is_template)
     if filename!=0
-        if is_template==1
+        if is_template=1
             call src_get_template(cursor,templates_data)
         else
             sd t_cursor

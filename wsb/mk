@@ -1,0 +1,4 @@
+
+o wsb.oc inplace_reloc 0
+ounused wsb.oc.log
+/usr/bin/i686-w64-mingw32-gcc-win32 wsb.o -o wsb.exe
