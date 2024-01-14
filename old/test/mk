@@ -1,0 +1,32 @@
+
+#was avplayer but was deleted, here is a fast start replacement from https://github.com/microsoft/Windows-classic-samples/tree/main/Samples/Win7Samples/multimedia/mediafoundation
+#can make it work on windows, not on wine
+
+a=0;b=0
+if [ -z "${1}" ]; then
+	a=1;b=1
+elif [ "${1}" = 1 ]; then
+	b=1;d=-g
+fi
+if [ ${a} = 1 ];then i686-w64-mingw32-windres SimplePlay.rc SimplePlay.o || exit 1; fi
+if [ ${b} = 1 ];then i686-w64-mingw32-g++-win32 -c winmain.cpp -municode ${d} || exit 1; fi
+if [ -z "${2}" ]; then
+	i686-w64-mingw32-g++-win32 SimplePlay.o winmain.o -municode -lshlwapi -lmfplay -lcomdlg32 -lole32 -static-libgcc -static-libstdc++ -lcomctl32 #still need -municode
+fi
+
+#wine Z:/usr/share/win32/gdbserver.exe localhost:12345 a.exe
+#from another terminal:
+#i686-w64-mingw32-gdb a.exe
+#(gdb) target extended-remote localhost:12345 #firt try was to break on function name
+
+#for MFPlayer2, many -l.. are untested
+#min max, some \\ to /, and <A to <a, and same at shlwapi.h
+#i686-w64-mingw32-g++-win32 AudioSessionVolume.o MainDialog.o MFPlayer.o Player2.o Slider.o ThemedButton.o winmain.o -municode -lshlwapi -lmfplay -lole32 -luuid -lgdi32 -lcomdlg32 -lkernel32 -luser32 -lgdi32 -lwinspool -lcomdlg32 -ladvapi32 -lshell32 -lole32 -loleaut32 -luuid -lcomctl32 -lwsock32 -lodbc32 -lshlwapi -lversion -loleacc -luxtheme -lmsimg32 -static-libgcc -static-libstdc++
+#on wine will sound work, video playing but no image, on windows error
+
+#git init, remote add
+#git sparse-checkout init
+#git sparse-checkout set "A/B"    #for a second folder use "add" instead of "set"
+#git sparse-checkout list
+
+#for video was using https://file-examples.com/index.php/sample-video-files/sample-avi-files-download/ and first file file_example_AVI_480_750kB.avi that is now on stick, for audio lr.mp3 from stick
