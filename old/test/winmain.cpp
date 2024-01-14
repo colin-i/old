@@ -397,8 +397,7 @@ BOOL InitializeWindow(HWND *pHwnd,HWND *pHwnd2)
 // Handles the WM_CLOSE message.
 //-------------------------------------------------------------------
 
-void OnClose(HWND hwnd)
-{
+void close_previous(HWND hwnd){
     if (g_pPlayer)
     {
         g_pPlayer->Shutdown();
@@ -412,6 +411,10 @@ void OnClose(HWND hwnd)
         g_pPlayerCB->Release();
         g_pPlayerCB = NULL;
     }
+}
+void OnClose(HWND hwnd)
+{
+	close_previous(hwnd);
 
     PostQuitMessage(0);
 }
@@ -596,8 +599,8 @@ HRESULT PlayMediaFile(HWND hwnd, const WCHAR *sURL)
     HRESULT hr;// = S_OK;
 
     // Create the MFPlayer object.
-    if (g_pPlayer == NULL)
-    {
+    if (g_pPlayer != NULL)close_previous(hwnd);
+
         g_pPlayerCB = new (std::nothrow) MediaPlayerCallback();
 
         if (g_pPlayerCB == NULL)
@@ -616,7 +619,6 @@ HRESULT PlayMediaFile(HWND hwnd, const WCHAR *sURL)
             );
 
         if (FAILED(hr)) { goto done; }
-    }
 
 	m_timerID=SetTimer(hwnd, IDT_TIMER1, TICK_FREQ, NULL);
 
