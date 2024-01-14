@@ -177,7 +177,7 @@ bool OnCreate(HWND hwnd, LPCREATESTRUCT){
 			     WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
 			     20, 20, 170, 30, hwnd, (HMENU)2, NULL, NULL))
 			{
-				SendMessage(hTrack, TBM_SETRANGE,  TRUE, MAKELONG(0, 100));
+				SendMessage(hTrack, TBM_SETRANGE,  TRUE, MAKELONG(0, 170));
 				SendMessage(hTrack, TBM_SETPAGESIZE, 0,  10);
 				SendMessage(hTrack, TBM_SETTICFREQ, 10, 0);
 				SendMessage(hTrack, TBM_SETPOS, FALSE, 0);
@@ -213,7 +213,7 @@ HRESULT GetDuration(MFTIME *phnsDuration)
 
 LRESULT printpos(){
     LRESULT pos = SendMessage(hTrack, TBM_GETPOS, 0, 0);
-    wchar_t buf[4];
+    wchar_t buf[6];
     StringCbPrintf(buf, sizeof(buf), L"%ld", pos);
     //wsprintfW(buf, L"%ld", pos);
     SetWindowTextW(hlbl, buf);
@@ -232,7 +232,8 @@ void OnHScroll(HWND h1, HWND , UINT , int )
 		HRESULT hr = GetDuration(&duration);
 		if (FAILED(hr)) { return; }
 
-		var.hVal.QuadPart = duration*pos/100;
+		int max=SendMessage(hTrack,TBM_GETRANGEMAX,0,0);
+		var.hVal.QuadPart = duration*pos/max;
 
 		g_pPlayer->SetPosition(MFP_POSITIONTYPE_100NS,&var);//attention at pause
 		PropVariantClear(&var);
@@ -243,7 +244,9 @@ void OnHScroll(HWND h1, HWND , UINT , int )
 BOOL OnSize2(LPARAM dims)
 {
 	int wd=dims&0x0000FFff;int hg=dims>>16;
-	SetWindowPos(hTrack,0,0,0,wd-20-20,30,SWP_NOMOVE);
+	int newwd=wd-20-20;
+	SendMessage(hTrack, TBM_SETRANGE,  TRUE, MAKELONG(0, newwd));
+	SetWindowPos(hTrack,0,0,0,newwd,30,SWP_NOMOVE);
 	return TRUE;
 }
 void OnTimer(){
@@ -259,7 +262,7 @@ void OnTimer(){
 		MFTIME duration;
 		HRESULT hr = GetDuration(&duration);
 		if (SUCCEEDED(hr)) {
-			LONG t=100*var.hVal.QuadPart/duration;
+			LONG t=SendMessage(hTrack,TBM_GETRANGEMAX,0,0)*var.hVal.QuadPart/duration;
 			SendMessage(hTrack, TBM_SETPOS, TRUE, t);
 			printpos();
 		}
