@@ -118,7 +118,7 @@ MediaPlayerCallback     *g_pPlayerCB = NULL;    // Application callback object.
 
 BOOL                    g_bHasVideo = FALSE;
 
-UINT_PTR m_timerID;
+UINT_PTR m_timerID=NULL;
 
 /////////////////////////////////////////////////////////////////////
 
@@ -398,19 +398,21 @@ BOOL InitializeWindow(HWND *pHwnd,HWND *pHwnd2)
 //-------------------------------------------------------------------
 
 void close_previous(HWND hwnd){
-    if (g_pPlayer)
-    {
-        g_pPlayer->Shutdown();
-        g_pPlayer->Release();
-        g_pPlayer = NULL;
-	KillTimer(hwnd, m_timerID);
-    }
-
-    if (g_pPlayerCB)
-    {
-        g_pPlayerCB->Release();
-        g_pPlayerCB = NULL;
-    }
+	if (g_pPlayerCB)
+	{
+		g_pPlayerCB->Release();
+		g_pPlayerCB = NULL;
+		if (g_pPlayer)
+		{
+			g_pPlayer->Shutdown();
+			g_pPlayer->Release();
+			g_pPlayer = NULL;
+			if(m_timerID!=NULL){
+				KillTimer(hwnd, m_timerID);
+				m_timerID=NULL;
+			}
+		}
+	}
 }
 void OnClose(HWND hwnd)
 {
