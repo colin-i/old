@@ -16,8 +16,8 @@ fi
 
 #wine Z:/usr/share/win32/gdbserver.exe localhost:12345 a.exe
 #from another terminal:
-#i686-w64-mingw32-gdb a.exe
-#(gdb) target extended-remote localhost:12345 #firt try was to break on function name
+#i686-w64-mingw32-gdb a.exe --eval-command="target extended-remote localhost:12345"
+#	#and can break on a function name
 
 #for MFPlayer2, many -l.. are untested
 #min max, some \\ to /, and <A to <a, and same at shlwapi.h
