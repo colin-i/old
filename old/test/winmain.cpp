@@ -232,8 +232,8 @@ void OnHScroll(HWND h1, HWND , UINT , int )
 		HRESULT hr = GetDuration(&duration);
 		if (FAILED(hr)) { return; }
 
-		int max=SendMessage(hTrack,TBM_GETRANGEMAX,0,0);
-		var.hVal.QuadPart = duration*pos/max;
+		LRESULT max=SendMessage(hTrack,TBM_GETRANGEMAX,0,0);
+		var.hVal.QuadPart = duration*pos/max;//is longlong*long/long, is not truncating, tested in asm
 
 		g_pPlayer->SetPosition(MFP_POSITIONTYPE_100NS,&var);//attention at pause
 		PropVariantClear(&var);
@@ -262,7 +262,8 @@ void OnTimer(){
 		MFTIME duration;
 		HRESULT hr = GetDuration(&duration);
 		if (SUCCEEDED(hr)) {
-			LONG t=SendMessage(hTrack,TBM_GETRANGEMAX,0,0)*var.hVal.QuadPart/duration;
+			LRESULT max=SendMessage(hTrack,TBM_GETRANGEMAX,0,0);
+			LONG t=var.hVal.QuadPart*max/duration;//is long=longlong*long/longlong, is not truncating, tested in asm
 			SendMessage(hTrack, TBM_SETPOS, TRUE, t);
 			printpos();
 		}
