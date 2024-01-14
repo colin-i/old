@@ -167,25 +167,25 @@ bool OnCreate(HWND hwnd, LPCREATESTRUCT){
     //HWND hRightLabel = CreateWindowW(L"Static", L"100",
       //  WS_CHILD | WS_VISIBLE, 0, 0, 30, 30, hwnd, (HMENU)2, NULL, NULL);
 
-    hlbl = CreateWindowW(L"Static", L"0", WS_CHILD | WS_VISIBLE,
-        20, 60, 30, 30, hwnd, (HMENU)1, NULL, NULL);
-
-    INITCOMMONCONTROLSEX icex;
-
-    icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-    icex.dwICC  = ICC_LISTVIEW_CLASSES;
-    InitCommonControlsEx(&icex);
-
-    hTrack = CreateWindowW(TRACKBAR_CLASSW, L"",
-        WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
-        20, 20, 170, 30, hwnd, (HMENU)2, NULL, NULL);
-
-    SendMessageW(hTrack, TBM_SETRANGE,  TRUE, MAKELONG(0, 100));
-    SendMessageW(hTrack, TBM_SETPAGESIZE, 0,  10);
-    SendMessageW(hTrack, TBM_SETTICFREQ, 10, 0);
-    SendMessageW(hTrack, TBM_SETPOS, FALSE, 0);
-    //SendMessageW(hTrack, TBM_SETBUDDY, TRUE, (LPARAM) hLeftLabel);
-    //SendMessageW(hTrack, TBM_SETBUDDY, FALSE, (LPARAM) hRightLabel);
+	if(hlbl = CreateWindowW(L"Static", L"0", WS_CHILD | WS_VISIBLE,
+		20, 60, 30, 30, hwnd, (HMENU)1, NULL, NULL)){
+		INITCOMMONCONTROLSEX icex;
+		icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+		icex.dwICC  = ICC_LISTVIEW_CLASSES;
+		if(InitCommonControlsEx(&icex)){
+			if(hTrack = CreateWindowW(TRACKBAR_CLASSW, L"", 
+			     WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
+			     20, 20, 170, 30, hwnd, (HMENU)2, NULL, NULL))
+			{
+				SendMessageW(hTrack, TBM_SETRANGE,  TRUE, MAKELONG(0, 100));
+				SendMessageW(hTrack, TBM_SETPAGESIZE, 0,  10);
+				SendMessageW(hTrack, TBM_SETTICFREQ, 10, 0);
+				SendMessageW(hTrack, TBM_SETPOS, FALSE, 0);
+				//SendMessageW(hTrack, TBM_SETBUDDY, TRUE, (LPARAM) hLeftLabel);
+				//SendMessageW(hTrack, TBM_SETBUDDY, FALSE, (LPARAM) hRightLabel);
+			}
+		}
+	}
 return TRUE;
 }
 HRESULT GetDuration(MFTIME *phnsDuration)
