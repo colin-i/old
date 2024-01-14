@@ -251,7 +251,7 @@ void OnTimer(){
 
 	PROPVARIANT var;
 	PropVariantInit(&var);
-	
+
 	hr = g_pPlayer->GetPosition(MFP_POSITIONTYPE_100NS, &var);
 
 	if (SUCCEEDED(hr))
