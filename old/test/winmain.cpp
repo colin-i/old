@@ -167,20 +167,20 @@ bool OnCreate(HWND hwnd, LPCREATESTRUCT){
     //HWND hRightLabel = CreateWindowW(L"Static", L"100",
       //  WS_CHILD | WS_VISIBLE, 0, 0, 30, 30, hwnd, (HMENU)2, NULL, NULL);
 
-	if(hlbl = CreateWindowW(L"Static", L"0", WS_CHILD | WS_VISIBLE,
+	if(hlbl = CreateWindow(L"Static", L"0", WS_CHILD | WS_VISIBLE,
 		20, 60, 30, 30, hwnd, (HMENU)1, NULL, NULL)){
 		INITCOMMONCONTROLSEX icex;
 		icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
 		icex.dwICC  = ICC_LISTVIEW_CLASSES;
 		if(InitCommonControlsEx(&icex)){
-			if(hTrack = CreateWindowW(TRACKBAR_CLASSW, L"",
+			if(hTrack = CreateWindow(TRACKBAR_CLASSW, L"",
 			     WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
 			     20, 20, 170, 30, hwnd, (HMENU)2, NULL, NULL))
 			{
-				SendMessageW(hTrack, TBM_SETRANGE,  TRUE, MAKELONG(0, 100));
-				SendMessageW(hTrack, TBM_SETPAGESIZE, 0,  10);
-				SendMessageW(hTrack, TBM_SETTICFREQ, 10, 0);
-				SendMessageW(hTrack, TBM_SETPOS, FALSE, 0);
+				SendMessage(hTrack, TBM_SETRANGE,  TRUE, MAKELONG(0, 100));
+				SendMessage(hTrack, TBM_SETPAGESIZE, 0,  10);
+				SendMessage(hTrack, TBM_SETTICFREQ, 10, 0);
+				SendMessage(hTrack, TBM_SETPOS, FALSE, 0);
 				//SendMessageW(hTrack, TBM_SETBUDDY, TRUE, (LPARAM) hLeftLabel);
 				//SendMessageW(hTrack, TBM_SETBUDDY, FALSE, (LPARAM) hRightLabel);
 			}
@@ -212,7 +212,7 @@ HRESULT GetDuration(MFTIME *phnsDuration)
 }
 
 LRESULT printpos(){
-    LRESULT pos = SendMessageW(hTrack, TBM_GETPOS, 0, 0);
+    LRESULT pos = SendMessage(hTrack, TBM_GETPOS, 0, 0);
     wchar_t buf[4];
     StringCbPrintf(buf, sizeof(buf), L"%ld", pos);
     //wsprintfW(buf, L"%ld", pos);
@@ -260,7 +260,7 @@ void OnTimer(){
 		HRESULT hr = GetDuration(&duration);
 		if (SUCCEEDED(hr)) {
 			LONG t=100*var.hVal.QuadPart/duration;
-			SendMessageW(hTrack, TBM_SETPOS, TRUE, t);
+			SendMessage(hTrack, TBM_SETPOS, TRUE, t);
 			printpos();
 		}
 	}
