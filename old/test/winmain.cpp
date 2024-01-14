@@ -173,7 +173,7 @@ bool OnCreate(HWND hwnd, LPCREATESTRUCT){
 		icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
 		icex.dwICC  = ICC_LISTVIEW_CLASSES;
 		if(InitCommonControlsEx(&icex)){
-			if(hTrack = CreateWindowW(TRACKBAR_CLASSW, L"", 
+			if(hTrack = CreateWindowW(TRACKBAR_CLASSW, L"",
 			     WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
 			     20, 20, 170, 30, hwnd, (HMENU)2, NULL, NULL))
 			{
