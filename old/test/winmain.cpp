@@ -127,7 +127,8 @@ public:
 #define main_controls_hg 30
 #define IDC_PAUSE 1
 #define IDC_STOP 2
-#define IDC_BUTTON 3
+#define IDC_CHKBX 3
+#define IDC_BUTTON 4
 #define bookmarks_limit 100
 #define bookmarks_limit_first IDC_BUTTON
 #define bookmarks_limit_adjusted IDC_BUTTON+bookmarks_limit
@@ -139,6 +140,8 @@ public:
 #define pause_button_left bookmark_button_right+main_controls_separator
 #define pause_button_right pause_button_left+main_controls_wd
 #define stop_button_left pause_button_right+main_controls_separator
+#define stop_button_right stop_button_left+main_controls_wd
+#define cb_button_left stop_button_right+main_controls_separator
 
 #define VAL_1X     -1
 #define VAL_2X     VAL_1X,  VAL_1X
@@ -159,6 +162,12 @@ static LPARAM bookmarks_graph[bookmarks_limit_adjusted];
 static HWND bookmarks_control[bookmarks_limit_adjusted];
 
 static HWND main_window;
+static HWND hTrack;
+static HWND hlbl;
+static HWND bookmark_button;
+static HWND pause_button;
+static HWND stop_button;
+static HWND check_button;
 
 /////////////////////////////////////////////////////////////////////
 
@@ -199,11 +208,6 @@ INT WINAPI wWinMain(HINSTANCE,HINSTANCE,LPWSTR,INT)
     return 0;
 }
 
-static HWND hTrack;
-static HWND hlbl;
-static HWND bookmark_button;
-static HWND pause_button;
-static HWND stop_button;
 static bool OnCreate(HWND hwnd, LPCREATESTRUCT){
 //    HWND hLeftLabel = CreateWindowW(L"Static", L"0",
   //      WS_CHILD | WS_VISIBLE, 0, 0, 10, 30, hwnd, 0, NULL, NULL);
@@ -216,20 +220,22 @@ static bool OnCreate(HWND hwnd, LPCREATESTRUCT){
 		if(bookmark_button=CreateWindow(L"BUTTON", L"Bookmark", WS_DISABLED | WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, bookmark_button_left, main_controls_top, main_controls_wd, main_controls_hg, hwnd, (HMENU)IDC_BUTTON, NULL, NULL)){
 			if(pause_button=CreateWindow(L"BUTTON", L"Pause/Resume", WS_DISABLED | WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, pause_button_left, main_controls_top, main_controls_wd, main_controls_hg, hwnd, (HMENU)IDC_PAUSE, NULL, NULL)){
 				if(stop_button=CreateWindow(L"BUTTON", L"Stop", WS_DISABLED | WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, stop_button_left, main_controls_top, main_controls_wd, main_controls_hg, hwnd, (HMENU)IDC_STOP, NULL, NULL)){
-					INITCOMMONCONTROLSEX icex;
-					icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-					icex.dwICC  = ICC_LISTVIEW_CLASSES;
-					if(InitCommonControlsEx(&icex)){
-						if(hTrack = CreateWindow(TRACKBAR_CLASSW, L"",
-						     WS_TABSTOP | WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
-						     control_left, track_top, 170, track_hg, hwnd, 0, NULL, NULL))
-						{
-							SendMessage(hTrack, TBM_SETRANGE,  TRUE, MAKELONG(0, 170));
-							SendMessage(hTrack, TBM_SETPAGESIZE, 0,  10);//mouse clicks
-							SendMessage(hTrack, TBM_SETTICFREQ, 10, 0);//Sets the interval frequency for tick marks in a trackbar, displayed
-							//SendMessage(hTrack, TBM_SETPOS, FALSE, 0);//comes already at 0
-							//SendMessageW(hTrack, TBM_SETBUDDY, TRUE, (LPARAM) hLeftLabel);
-							//SendMessageW(hTrack, TBM_SETBUDDY, FALSE, (LPARAM) hRightLabel);
+					if(check_button=CreateWindowEx(0, WC_BUTTON, TEXT("Delete bookmark on click"), WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, cb_button_left, main_controls_top, main_controls_wd*2, main_controls_hg, hwnd, (HMENU)IDC_CHKBX, NULL, NULL)){
+						INITCOMMONCONTROLSEX icex;
+						icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+						icex.dwICC  = ICC_LISTVIEW_CLASSES;
+						if(InitCommonControlsEx(&icex)){
+							if(hTrack = CreateWindow(TRACKBAR_CLASSW, L"",
+							     WS_TABSTOP | WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
+							     control_left, track_top, 170, track_hg, hwnd, 0, NULL, NULL))
+							{
+								SendMessage(hTrack, TBM_SETRANGE,  TRUE, MAKELONG(0, 170));
+								SendMessage(hTrack, TBM_SETPAGESIZE, 0,  10);//mouse clicks
+								SendMessage(hTrack, TBM_SETTICFREQ, 10, 0);//Sets the interval frequency for tick marks in a trackbar, displayed
+								//SendMessage(hTrack, TBM_SETPOS, FALSE, 0);//comes already at 0
+								//SendMessageW(hTrack, TBM_SETBUDDY, TRUE, (LPARAM) hLeftLabel);
+								//SendMessageW(hTrack, TBM_SETBUDDY, FALSE, (LPARAM) hRightLabel);
+							}
 						}
 					}
 				}
@@ -438,9 +444,9 @@ static BOOL InitializeWindow(HWND *pHwnd)
 		DestroyWindow(main_window);return FALSE;
 	}
 
-    ShowWindow(main_window, SW_SHOWMAXIMIZED);//SW_SHOWDEFAULT
+    ShowWindow(main_window, SW_SHOWDEFAULT);//SW_SHOWMAXIMIZED
     UpdateWindow(main_window);
-    ShowWindow(hwnd, SW_SHOWMAXIMIZED);
+    ShowWindow(hwnd, SW_SHOWDEFAULT);
     UpdateWindow(hwnd);
 
     *pHwnd = hwnd;
@@ -622,7 +628,7 @@ static void OnCommand(HWND hwnd, int id, HWND /*hwndCtl*/, UINT /*codeNotify*/)
 }
 
 static void OnCommand2(HWND hwnd,WORD param,HWND control){
-	//if (g_pPlayer){
+	if (param!=IDC_CHKBX){
 		if(param==IDC_BUTTON){
 			for(int i=bookmarks_limit_first;i<bookmarks_limit_adjusted;i++){
 				if(bookmarks[i]==-1){
@@ -646,9 +652,11 @@ static void OnCommand2(HWND hwnd,WORD param,HWND control){
 		WORD pos=param-1;
 		SetPosition(bookmarks[pos]);
 		SendMessage(hTrack, TBM_SETPOS, TRUE, bookmarks_graph[pos]);
-		DestroyWindow(control);
-		bookmarks[pos]=-1;
-	//}
+		if(SendMessage(check_button,BM_GETCHECK,0,0)==BST_CHECKED){
+			DestroyWindow(control);
+			bookmarks[pos]=-1;
+		}
+	}
 }
 
 //-------------------------------------------------------------------
