@@ -530,7 +530,7 @@ static void OnPaint(HWND hwnd)
 static void OnPaint2(HWND hwnd){
 	PAINTSTRUCT ps;
 	HDC hdc = BeginPaint(hwnd, &ps);
-	
+
 	// All painting occurs here, between BeginPaint and EndPaint.
 	FillRect(hdc, &ps.rcPaint, (HBRUSH)COLOR_WINDOW);
 	EndPaint(hwnd, &ps);
@@ -571,9 +571,9 @@ static void OnSize2(LPARAM dims)
 // Toggle between playback and paused/stopped.
 static void pause(){
 	MFP_MEDIAPLAYER_STATE state;// = MFP_MEDIAPLAYER_STATE_EMPTY; //it's only [out]
-	
+
 	HRESULT hr = g_pPlayer->GetState(&state);
-	
+
 	if (SUCCEEDED(hr))
 	{
 	    if (state == MFP_MEDIAPLAYER_STATE_PAUSED || state == MFP_MEDIAPLAYER_STATE_STOPPED)
@@ -858,6 +858,6 @@ static void ShowErrorMessage(PCWSTR format, HRESULT hrErr)
 
 //wchar_t buf[256];
 //FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-//               NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
+//               NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 //               buf, (sizeof(buf) / sizeof(wchar_t)), NULL);
 //printf("%S\n",buf);
