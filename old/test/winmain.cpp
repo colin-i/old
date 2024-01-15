@@ -1,6 +1,8 @@
 
 #define WINVER _WIN32_WINNT_WIN7
 
+#include "resource.h"
+
 #include <new>
 #include <windows.h>
 #include <windowsx.h>  //HANDLE_MSG
@@ -9,38 +11,38 @@
 //#include <shobjidl.h>   // defines IFileOpenDialog
 #include <strsafe.h> //StringCbPrintf
 
-#include "resource.h"
-
 //#include "Slider.h"
 #include <commctrl.h>
 
-BOOL    InitializeWindow(HWND *pHwnd,HWND *pHwnd2);
-HRESULT PlayMediaFile(HWND hwnd, const WCHAR *sURL);
-void    ShowErrorMessage(PCWSTR format, HRESULT hr);
+static BOOL    InitializeWindow(HWND *pHwnd);
+static HRESULT PlayMediaFile(HWND hwnd, const WCHAR *sURL);
+static void    ShowErrorMessage(PCWSTR format, HRESULT hr);
 
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 // Window message handlers
-void    OnClose(HWND hwnd);
-void    OnPaint(HWND hwnd);
-void    OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify);
-void    OnSize(HWND hwnd, UINT state, int cx, int cy);
-void    OnKeyDown(HWND hwnd, UINT vk, BOOL fDown, int cRepeat, UINT flags);
-
+static void    OnClose(HWND hwnd);
+static void    OnPaint(HWND hwnd);
+static void    OnPaint2(HWND hwnd);
+static void    OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify);
+static void    OnCommand2(HWND,WORD,HWND);
+static void    OnSize(HWND hwnd, UINT state, int cx, int cy);
+static void    OnSize2(LPARAM);
+static void    OnKeyDown(HWND hwnd, UINT vk, BOOL fDown, int cRepeat, UINT flags);
 // Menu handlers
-void    OnFileOpen(HWND hwnd);
+static void    OnFileOpen(HWND hwnd);
 
 // MFPlay event handler functions.
-void OnMediaItemCreated(MFP_MEDIAITEM_CREATED_EVENT *pEvent);
-void OnMediaItemSet(MFP_MEDIAITEM_SET_EVENT *pEvent);
+static void OnMediaItemCreated(MFP_MEDIAITEM_CREATED_EVENT *pEvent);
+static void OnMediaItemSet(MFP_MEDIAITEM_SET_EVENT *pEvent);
 
 // Constants
-const WCHAR CLASS_NAME[]  = L"MFPlay Window Class";
-const WCHAR WINDOW_NAME[] = L"MFPlay Sample Application";
-const WCHAR CLASS_NAME2[]  = L"MFPlay Window Class2";
-const WCHAR WINDOW_NAME2[] = L"MFPlay Sample Application2";
-const UINT_PTR  IDT_TIMER1 = 1;     // Timer ID
-const UINT      TICK_FREQ = 999;    // Timer frequency in msec
+static const WCHAR CLASS_NAME[]  = L"MFPlay Window Class";
+static const WCHAR WINDOW_NAME[] = L"MFPlay Sample Application";
+static const WCHAR CLASS_NAME2[]  = L"MFPlay Window Class2";
+static const WCHAR WINDOW_NAME2[] = L"MFPlay Sample Application2";
+static const UINT_PTR  IDT_TIMER1 = 1;     // Timer ID
+static const UINT      TICK_FREQ = 999;    // Timer frequency in msec
 
 //-------------------------------------------------------------------
 //
@@ -113,12 +115,50 @@ public:
 
 // Global variables
 
-IMFPMediaPlayer         *g_pPlayer = NULL;      // The MFPlay player object.
-MediaPlayerCallback     *g_pPlayerCB = NULL;    // Application callback object.
+#define control_left 20
+#define track_top 20
+#define track_hg 30
 
-BOOL                    g_bHasVideo = FALSE;
+#define bookmarks_top track_top+track_hg+10
+#define bookmarks_hg track_hg
 
-UINT_PTR m_timerID=NULL;
+#define main_controls_top bookmarks_top+bookmarks_hg+10
+#define main_controls_wd 110
+#define main_controls_hg 30
+#define IDC_PAUSE 1
+#define IDC_STOP 2
+#define IDC_BUTTON 3
+#define bookmarks_limit 100
+#define bookmarks_limit_first IDC_BUTTON
+#define bookmarks_limit_adjusted IDC_BUTTON+bookmarks_limit
+#define main_controls_separator 10
+
+#define bookmark_button_left 80
+#define bookmark_button_right bookmark_button_left+main_controls_wd
+#define bookmark_button_right bookmark_button_left+main_controls_wd
+#define pause_button_left bookmark_button_right+main_controls_separator
+#define pause_button_right pause_button_left+main_controls_wd
+#define stop_button_left pause_button_right+main_controls_separator
+
+#define VAL_1X     -1
+#define VAL_2X     VAL_1X,  VAL_1X
+#define VAL_4X     VAL_2X,  VAL_2X
+#define VAL_8X     VAL_4X,  VAL_4X
+#define VAL_16X    VAL_8X,  VAL_8X
+#define VAL_32X    VAL_16X, VAL_16X
+#define VAL_64X    VAL_32X, VAL_32X
+
+static IMFPMediaPlayer         *g_pPlayer = NULL;      // The MFPlay player object.
+static MediaPlayerCallback     *g_pPlayerCB = NULL;    // Application callback object.
+
+static BOOL                    g_bHasVideo = FALSE;
+
+static UINT_PTR m_timerID=NULL;
+static MFTIME bookmarks[bookmarks_limit_adjusted]={0, VAL_64X , VAL_32X , VAL_4X};//long long
+static LPARAM bookmarks_graph[bookmarks_limit_adjusted];
+static HWND bookmarks_control[bookmarks_limit_adjusted];
+
+static HWND main_window;
 
 /////////////////////////////////////////////////////////////////////
 
@@ -132,9 +172,8 @@ INT WINAPI wWinMain(HINSTANCE,HINSTANCE,LPWSTR,INT)
     }
 
     HWND hwnd;// = 0;
-    HWND hwnd2;
 
-    if (!InitializeWindow(&hwnd,&hwnd2))
+    if (!InitializeWindow(&hwnd))
     {
         return 0;
     }
@@ -145,14 +184,16 @@ INT WINAPI wWinMain(HINSTANCE,HINSTANCE,LPWSTR,INT)
 		// Message loop
 		while (GetMessage(&msg, NULL, 0, 0))
 		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+			if(!IsDialogMessage(hwnd, &msg)){//for tabs
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
 		}
 	//	DestroyWindow(slider);
 	//}
 
-    DestroyWindow(hwnd2);
     DestroyWindow(hwnd);
+    DestroyWindow(main_window);
     CoUninitialize();
 
     return 0;
@@ -160,36 +201,44 @@ INT WINAPI wWinMain(HINSTANCE,HINSTANCE,LPWSTR,INT)
 
 static HWND hTrack;
 static HWND hlbl;
-bool OnCreate(HWND hwnd, LPCREATESTRUCT){
+static HWND bookmark_button;
+static HWND pause_button;
+static HWND stop_button;
+static bool OnCreate(HWND hwnd, LPCREATESTRUCT){
 //    HWND hLeftLabel = CreateWindowW(L"Static", L"0",
-  //      WS_CHILD | WS_VISIBLE, 0, 0, 10, 30, hwnd, (HMENU)1, NULL, NULL);
+  //      WS_CHILD | WS_VISIBLE, 0, 0, 10, 30, hwnd, 0, NULL, NULL);
 
     //HWND hRightLabel = CreateWindowW(L"Static", L"100",
-      //  WS_CHILD | WS_VISIBLE, 0, 0, 30, 30, hwnd, (HMENU)2, NULL, NULL);
+      //  WS_CHILD | WS_VISIBLE, 0, 0, 30, 30, hwnd, 0, NULL, NULL);
 
 	if(hlbl = CreateWindow(L"Static", L"0", WS_CHILD | WS_VISIBLE,
-		20, 60, 30, 30, hwnd, (HMENU)1, NULL, NULL)){
-		INITCOMMONCONTROLSEX icex;
-		icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-		icex.dwICC  = ICC_LISTVIEW_CLASSES;
-		if(InitCommonControlsEx(&icex)){
-			if(hTrack = CreateWindow(TRACKBAR_CLASSW, L"",
-			     WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
-			     20, 20, 170, 30, hwnd, (HMENU)2, NULL, NULL))
-			{
-				SendMessage(hTrack, TBM_SETRANGE,  TRUE, MAKELONG(0, 170));
-				SendMessage(hTrack, TBM_SETPAGESIZE, 0,  10);
-				SendMessage(hTrack, TBM_SETTICFREQ, 10, 0);
-				SendMessage(hTrack, TBM_SETPOS, FALSE, 0);
-				//SendMessageW(hTrack, TBM_SETBUDDY, TRUE, (LPARAM) hLeftLabel);
-				//SendMessageW(hTrack, TBM_SETBUDDY, FALSE, (LPARAM) hRightLabel);
+		control_left, main_controls_top, 50, main_controls_hg, hwnd, (HMENU)2, NULL, NULL)){
+		if(bookmark_button=CreateWindow(L"BUTTON", L"Bookmark", WS_DISABLED | WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, bookmark_button_left, main_controls_top, main_controls_wd, main_controls_hg, hwnd, (HMENU)IDC_BUTTON, NULL, NULL)){
+			if(pause_button=CreateWindow(L"BUTTON", L"Pause/Resume", WS_DISABLED | WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, pause_button_left, main_controls_top, main_controls_wd, main_controls_hg, hwnd, (HMENU)IDC_PAUSE, NULL, NULL)){
+				if(stop_button=CreateWindow(L"BUTTON", L"Stop", WS_DISABLED | WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, stop_button_left, main_controls_top, main_controls_wd, main_controls_hg, hwnd, (HMENU)IDC_STOP, NULL, NULL)){
+					INITCOMMONCONTROLSEX icex;
+					icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+					icex.dwICC  = ICC_LISTVIEW_CLASSES;
+					if(InitCommonControlsEx(&icex)){
+						if(hTrack = CreateWindow(TRACKBAR_CLASSW, L"",
+						     WS_TABSTOP | WS_CHILD | WS_VISIBLE | TBS_AUTOTICKS,
+						     control_left, track_top, 170, track_hg, hwnd, 0, NULL, NULL))
+						{
+							SendMessage(hTrack, TBM_SETRANGE,  TRUE, MAKELONG(0, 170));
+							SendMessage(hTrack, TBM_SETPAGESIZE, 0,  10);//mouse clicks
+							SendMessage(hTrack, TBM_SETTICFREQ, 10, 0);//Sets the interval frequency for tick marks in a trackbar, displayed
+							//SendMessage(hTrack, TBM_SETPOS, FALSE, 0);//comes already at 0
+							//SendMessageW(hTrack, TBM_SETBUDDY, TRUE, (LPARAM) hLeftLabel);
+							//SendMessageW(hTrack, TBM_SETBUDDY, FALSE, (LPARAM) hRightLabel);
+						}
+					}
+				}
 			}
 		}
 	}
 return TRUE;
 }
-HRESULT GetDuration(MFTIME *phnsDuration)
-
+static HRESULT GetDuration(MFTIME *phnsDuration)
 {
     HRESULT hr;// = E_FAIL;
 
@@ -210,46 +259,7 @@ HRESULT GetDuration(MFTIME *phnsDuration)
     PropVariantClear(&var);
     return hr;
 }
-
-LRESULT printpos(){
-    LRESULT pos = SendMessage(hTrack, TBM_GETPOS, 0, 0);
-    wchar_t buf[6];
-    StringCbPrintf(buf, sizeof(buf), L"%ld", pos);
-    //wsprintfW(buf, L"%ld", pos);
-    SetWindowTextW(hlbl, buf);
-	return pos;
-}
-
-void OnHScroll(HWND h1, HWND , UINT , int )
-{
-	LRESULT pos=printpos();
-
-	if (g_pPlayer){
-		PROPVARIANT var;
-		PropVariantInit(&var);
-		var.vt = VT_I8;
-		MFTIME duration;
-		HRESULT hr = GetDuration(&duration);
-		if (FAILED(hr)) { return; }
-
-		LRESULT max=SendMessage(hTrack,TBM_GETRANGEMAX,0,0);
-		var.hVal.QuadPart = duration*pos/max;//is longlong*long/long, is not truncating, tested in asm
-
-		g_pPlayer->SetPosition(MFP_POSITIONTYPE_100NS,&var);//attention at pause
-		PropVariantClear(&var);
-
-		SetFocus(h1);//so space can work again, not focusing the tracker
-	}
-}
-BOOL OnSize2(LPARAM dims)
-{
-	int wd=dims&0x0000FFff;int hg=dims>>16;
-	int newwd=wd-20-20;
-	SendMessage(hTrack, TBM_SETRANGE,  TRUE, MAKELONG(0, newwd));
-	SetWindowPos(hTrack,0,0,0,newwd,30,SWP_NOMOVE);
-	return TRUE;
-}
-void OnTimer(){
+static HRESULT GetPosition(MFTIME*pposition){
 	HRESULT hr;// = S_OK;
 
 	PROPVARIANT var;
@@ -259,25 +269,67 @@ void OnTimer(){
 
 	if (SUCCEEDED(hr))
 	{
-		MFTIME duration;
-		HRESULT hr = GetDuration(&duration);
-		if (SUCCEEDED(hr)) {
-			LRESULT max=SendMessage(hTrack,TBM_GETRANGEMAX,0,0);
-			LONG t=var.hVal.QuadPart*max/duration;//is long=longlong*long/longlong, is not truncating, tested in asm
-			SendMessage(hTrack, TBM_SETPOS, TRUE, t);
-			printpos();
-		}
+		*pposition=var.hVal.QuadPart;
 	}
 
 	PropVariantClear(&var);
+	return hr;
 }
+static void SetPosition(MFTIME pos){
+	PROPVARIANT var;
+	PropVariantInit(&var);
+	var.vt = VT_I8;
+	var.hVal.QuadPart = pos;
+	g_pPlayer->SetPosition(MFP_POSITIONTYPE_100NS,&var);//attention at pause
+	PropVariantClear(&var);
+}
+
+static LRESULT printpos(){
+    LRESULT pos = SendMessage(hTrack, TBM_GETPOS, 0, 0);
+    wchar_t buf[6];
+    StringCbPrintf(buf, sizeof(buf), L"%ld", pos);
+    //wsprintfW(buf, L"%ld", pos);
+    SetWindowTextW(hlbl, buf);
+	return pos;
+}
+
+static void OnHScroll(HWND , HWND , UINT , int )
+{
+	LRESULT pos=printpos();
+
+	if (g_pPlayer){
+		MFTIME duration;
+		HRESULT hr = GetDuration(&duration);
+		if (FAILED(hr)) { return; }
+		LRESULT max=SendMessage(hTrack,TBM_GETRANGEMAX,0,0);
+		SetPosition(duration*pos/max);//is longlong*long/long, is not truncating, tested in asm
+
+		//SetFocus(h1);//so space can work again, not focusing the tracker //but the solution is not with the focus mess, must be with a subclass or lowlevel hook
+	}
+}
+static void OnTimer(){
+	MFTIME pos;
+
+	HRESULT hr = GetPosition(&pos);
+	if (FAILED(hr)) { return; }
+
+	MFTIME duration;
+	hr = GetDuration(&duration);
+	if (SUCCEEDED(hr)) {
+		LRESULT max=SendMessage(hTrack,TBM_GETRANGEMAX,0,0);
+		LONG t=pos*max/duration;//is long=longlong*long/longlong, is not truncating, tested in asm
+		SendMessage(hTrack, TBM_SETPOS, TRUE, t);
+		printpos();
+	}
+}
+
 //-------------------------------------------------------------------
 // WindowProc
 //
 // Main window procedure.
 //-------------------------------------------------------------------
 
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
@@ -287,8 +339,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return 0;
         HANDLE_MSG(hwnd, WM_KEYDOWN, OnKeyDown);
         HANDLE_MSG(hwnd, WM_COMMAND, OnCommand);
-    case WM_ERASEBKGND:
-        return 1;
         HANDLE_MSG(hwnd, WM_SIZE,    OnSize);
         HANDLE_MSG(hwnd, WM_CLOSE,   OnClose);
 
@@ -296,17 +346,21 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return DefWindowProc(hwnd, uMsg, wParam, lParam);
     }
 }
-LRESULT CALLBACK WindowProc2(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK WindowProc2(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
     {
         HANDLE_MSG(hwnd, WM_HSCROLL, OnHScroll);
         HANDLE_MSG(hwnd, WM_KEYDOWN, OnKeyDown);
-
+	case WM_COMMAND:
+		OnCommand2(hwnd,LOWORD(wParam),(HWND)lParam);
+		return 0;
+    case WM_PAINT: //whithout, will not redraw when trackbar is resizing on wm_size
+	OnPaint2(hwnd);
+        return 0;
     case WM_SIZE://WM_SIZING nothing
-        return OnSize2(lParam);
-    case WM_ERASEBKGND:
-        return 1;
+	OnSize2(lParam);
+	return 0;
 
         HANDLE_MSG(hwnd, WM_CREATE,  OnCreate);
     default:
@@ -320,7 +374,7 @@ LRESULT CALLBACK WindowProc2(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 // Creates the main application window.
 //-------------------------------------------------------------------
 
-BOOL InitializeWindow(HWND *pHwnd,HWND *pHwnd2)
+static BOOL InitializeWindow(HWND *pHwnd)
 {
     WNDCLASS wc = {0};// if there are fewer initialisers in the list than there are members in the struct, then each member not explicitly initialised is default-initialised.
 //there is member that needs default at register call
@@ -348,7 +402,7 @@ BOOL InitializeWindow(HWND *pHwnd,HWND *pHwnd2)
         return FALSE;
     }
 
-    HWND hwnd = CreateWindow(
+    main_window = CreateWindow(
         CLASS_NAME,
         WINDOW_NAME,
         WS_OVERLAPPEDWINDOW,
@@ -362,12 +416,12 @@ BOOL InitializeWindow(HWND *pHwnd,HWND *pHwnd2)
         NULL
         );
 
-    if (!hwnd)
+    if (!main_window)
     {
         return FALSE;
     }
 
-    HWND hwnd2 = CreateWindow(
+    HWND hwnd = CreateWindowEx(WS_EX_CONTROLPARENT,//for tabs
         CLASS_NAME2,
         WINDOW_NAME2,
         WS_OVERLAPPEDWINDOW,
@@ -380,17 +434,16 @@ BOOL InitializeWindow(HWND *pHwnd,HWND *pHwnd2)
         GetModuleHandle(NULL),
         NULL
         );
-	if (!hwnd2){
-		DestroyWindow(hwnd);return FALSE;
+	if (!hwnd){
+		DestroyWindow(main_window);return FALSE;
 	}
 
-    ShowWindow(hwnd, SW_SHOWMAXIMIZED);//SW_SHOWDEFAULT
+    ShowWindow(main_window, SW_SHOWMAXIMIZED);//SW_SHOWDEFAULT
+    UpdateWindow(main_window);
+    ShowWindow(hwnd, SW_SHOWMAXIMIZED);
     UpdateWindow(hwnd);
-    ShowWindow(hwnd2, SW_SHOWMAXIMIZED);
-    UpdateWindow(hwnd2);
 
     *pHwnd = hwnd;
-    *pHwnd2 = hwnd2;
 
     return TRUE;
 }
@@ -401,24 +454,40 @@ BOOL InitializeWindow(HWND *pHwnd,HWND *pHwnd2)
 // Handles the WM_CLOSE message.
 //-------------------------------------------------------------------
 
-void close_previous(HWND hwnd){
+static void close_playercb(){
+	g_pPlayerCB->Release();
+	g_pPlayerCB = NULL;
+}
+static void close_playertimer(HWND hwnd){
+	KillTimer(hwnd, m_timerID);
+	m_timerID=NULL;
+}
+static void close_previous(HWND hwnd){
 	if (g_pPlayerCB)
 	{
-		g_pPlayerCB->Release();
-		g_pPlayerCB = NULL;
-		if (g_pPlayer)
-		{
-			g_pPlayer->Shutdown();
-			g_pPlayer->Release();
-			g_pPlayer = NULL;
-			if(m_timerID!=NULL){
-				KillTimer(hwnd, m_timerID);
-				m_timerID=NULL;
+		close_playercb();
+		if(m_timerID!=NULL){
+			close_playertimer(hwnd);
+			if (g_pPlayer)
+			{
+				g_pPlayer->Shutdown();
+				g_pPlayer->Release();
+				g_pPlayer = NULL;
+
+				//and close bookmarks
+				for(int i=bookmarks_limit_first;i<bookmarks_limit_adjusted;i++){
+					if(bookmarks[i]!=-1)DestroyWindow(bookmarks_control[i]);
+				}
+
+				//and buttons to first state
+				EnableWindow(bookmark_button,FALSE);
+				EnableWindow(pause_button,FALSE);
+				EnableWindow(stop_button,FALSE);
 			}
 		}
 	}
 }
-void OnClose(HWND hwnd)
+static void OnClose(HWND hwnd)
 {
 	close_previous(hwnd);
 
@@ -432,7 +501,7 @@ void OnClose(HWND hwnd)
 // Handles the WM_PAINT message.
 //-------------------------------------------------------------------
 
-void OnPaint(HWND hwnd)
+static void OnPaint(HWND hwnd)
 {
     PAINTSTRUCT ps;
     HDC hdc;// = 0;
@@ -458,7 +527,14 @@ void OnPaint(HWND hwnd)
 
     EndPaint(hwnd, &ps);
 }
-
+static void OnPaint2(HWND hwnd){
+	PAINTSTRUCT ps;
+	HDC hdc = BeginPaint(hwnd, &ps);
+	
+	// All painting occurs here, between BeginPaint and EndPaint.
+	FillRect(hdc, &ps.rcPaint, (HBRUSH)COLOR_WINDOW);
+	EndPaint(hwnd, &ps);
+}
 
 //-------------------------------------------------------------------
 // OnSize
@@ -466,7 +542,7 @@ void OnPaint(HWND hwnd)
 // Handles the WM_SIZE message.
 //-------------------------------------------------------------------
 
-void OnSize(HWND /*hwnd*/, UINT state, int /*cx*/, int /*cy*/)
+static void OnSize(HWND /*hwnd*/, UINT state, int /*cx*/, int /*cy*/)
 {
     if (state == SIZE_RESTORED)
     {
@@ -477,6 +553,13 @@ void OnSize(HWND /*hwnd*/, UINT state, int /*cx*/, int /*cy*/)
         }
     }
 }
+static void OnSize2(LPARAM dims)
+{
+	int wd=dims&0x0000FFff;int hg=dims>>16;
+	int newwd=wd-20-20;
+	SendMessage(hTrack, TBM_SETRANGE,  TRUE, MAKELONG(0, newwd));
+	SetWindowPos(hTrack,0,0,0,newwd,30,SWP_NOMOVE);
+}
 
 
 //-------------------------------------------------------------------
@@ -485,40 +568,36 @@ void OnSize(HWND /*hwnd*/, UINT state, int /*cx*/, int /*cy*/)
 // Handles the WM_KEYDOWN message.
 //-------------------------------------------------------------------
 
-void OnKeyDown(HWND /*hwnd*/, UINT vk, BOOL /*fDown*/, int /*cRepeat*/, UINT /*flags*/)
-{
-    HRESULT hr = S_OK;
-
-    switch (vk)
-    {
-    case VK_SPACE:
-
-        // Toggle between playback and paused/stopped.
-        if (g_pPlayer)
-        {
-            MFP_MEDIAPLAYER_STATE state;// = MFP_MEDIAPLAYER_STATE_EMPTY; //it's only [out]
-
-            hr = g_pPlayer->GetState(&state);
-
-            if (SUCCEEDED(hr))
-            {
-                if (state == MFP_MEDIAPLAYER_STATE_PAUSED || state == MFP_MEDIAPLAYER_STATE_STOPPED)
-                {
-                    hr = g_pPlayer->Play();
-                }
-                else if (state == MFP_MEDIAPLAYER_STATE_PLAYING)
-                {
-                    hr = g_pPlayer->Pause();
-                }
-            }
-        }
-        //break;
-    }
-
+// Toggle between playback and paused/stopped.
+static void pause(){
+	MFP_MEDIAPLAYER_STATE state;// = MFP_MEDIAPLAYER_STATE_EMPTY; //it's only [out]
+	
+	HRESULT hr = g_pPlayer->GetState(&state);
+	
+	if (SUCCEEDED(hr))
+	{
+	    if (state == MFP_MEDIAPLAYER_STATE_PAUSED || state == MFP_MEDIAPLAYER_STATE_STOPPED)
+	    {
+	        hr = g_pPlayer->Play();
+	    }
+	    else if (state == MFP_MEDIAPLAYER_STATE_PLAYING)
+	    {
+	        hr = g_pPlayer->Pause();
+	    }
+	}
     if (FAILED(hr))
     {
         ShowErrorMessage(TEXT("Playback Error"), hr);
     }
+}
+static void OnKeyDown(HWND /*hwnd*/, UINT vk, BOOL /*fDown*/, int /*cRepeat*/, UINT /*flags*/)
+{
+	if(vk==VK_SPACE){
+        if (g_pPlayer)
+        {
+		pause();
+        }
+	}
 }
 
 
@@ -528,7 +607,7 @@ void OnKeyDown(HWND /*hwnd*/, UINT vk, BOOL /*fDown*/, int /*cRepeat*/, UINT /*f
 // Handles the WM_COMMAND message.
 //-------------------------------------------------------------------
 
-void OnCommand(HWND hwnd, int id, HWND /*hwndCtl*/, UINT /*codeNotify*/)
+static void OnCommand(HWND hwnd, int id, HWND /*hwndCtl*/, UINT /*codeNotify*/)
 {
     switch (id)
     {
@@ -542,6 +621,35 @@ void OnCommand(HWND hwnd, int id, HWND /*hwndCtl*/, UINT /*codeNotify*/)
     }
 }
 
+static void OnCommand2(HWND hwnd,WORD param,HWND control){
+	//if (g_pPlayer){
+		if(param==IDC_BUTTON){
+			for(int i=bookmarks_limit_first;i<bookmarks_limit_adjusted;i++){
+				if(bookmarks[i]==-1){
+					RECT rect;
+					SendMessage(hTrack,TBM_GETTHUMBRECT,0,(LPARAM)&rect);
+					if(bookmarks_control[i]=CreateWindow(L"BUTTON", NULL, WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, control_left+rect.left, bookmarks_top, rect.right-rect.left, bookmarks_hg, hwnd, (HMENU)(i+1), NULL, NULL)){
+						GetPosition(&bookmarks[i]);
+						bookmarks_graph[i]=SendMessage(hTrack, TBM_GETPOS, 0, 0);
+					}
+					return;
+				}
+			}
+			return;
+		}else if(param==IDC_PAUSE){
+			pause();
+			return;
+		}else if(param==IDC_STOP){
+			close_previous(main_window);
+			return;
+		}
+		WORD pos=param-1;
+		SetPosition(bookmarks[pos]);
+		SendMessage(hTrack, TBM_SETPOS, TRUE, bookmarks_graph[pos]);
+		DestroyWindow(control);
+		bookmarks[pos]=-1;
+	//}
+}
 
 //-------------------------------------------------------------------
 // OnFileOpen
@@ -549,7 +657,7 @@ void OnCommand(HWND hwnd, int id, HWND /*hwndCtl*/, UINT /*codeNotify*/)
 // Handles the "File Open" command.
 //-------------------------------------------------------------------
 
-void OnFileOpen(HWND hwnd)
+static void OnFileOpen(HWND hwnd)
 {
     const WCHAR *lpstrFilter =
         L"Media Files\0*.aac;*.asf;*.avi;*.m4a;*.mp3;*.mp4;*.wav;*.wma;*.wmv;*.3gp;*.3g2\0"
@@ -600,7 +708,7 @@ void OnFileOpen(HWND hwnd)
 // Plays a media file, using the IMFPMediaPlayer interface.
 //-------------------------------------------------------------------
 
-HRESULT PlayMediaFile(HWND hwnd, const WCHAR *sURL)
+static HRESULT PlayMediaFile(HWND hwnd, const WCHAR *sURL)
 {
     HRESULT hr;// = S_OK;
 
@@ -615,6 +723,12 @@ HRESULT PlayMediaFile(HWND hwnd, const WCHAR *sURL)
             goto done;
         }
 
+	m_timerID=SetTimer(hwnd, IDT_TIMER1, TICK_FREQ, NULL);
+	if(m_timerID==NULL){//is _PTR
+		close_playercb();
+		hr = E_OUTOFMEMORY;goto done;
+	}
+
         hr = MFPCreateMediaPlayer(
             NULL,
             FALSE,          // Start playback automatically?
@@ -624,9 +738,15 @@ HRESULT PlayMediaFile(HWND hwnd, const WCHAR *sURL)
             &g_pPlayer
             );
 
-        if (FAILED(hr)) { goto done; }
+	if (FAILED(hr)) {
+		close_playercb();
+		close_playertimer(hwnd);
+		goto done;
+	}
 
-	m_timerID=SetTimer(hwnd, IDT_TIMER1, TICK_FREQ, NULL);
+	EnableWindow(bookmark_button,TRUE);
+	EnableWindow(pause_button,TRUE);
+	EnableWindow(stop_button,TRUE);
 
     // Create a new media item for this URL.
     hr = g_pPlayer->CreateMediaItemFromURL(sURL, FALSE, 0, NULL);
@@ -634,7 +754,6 @@ HRESULT PlayMediaFile(HWND hwnd, const WCHAR *sURL)
     // The CreateMediaItemFromURL method completes asynchronously.
     // The application will receive an MFP_EVENT_TYPE_MEDIAITEM_CREATED
     // event. See MediaPlayerCallback::OnMediaPlayerEvent().
-
 
 done:
     return hr;
@@ -676,7 +795,7 @@ void MediaPlayerCallback::OnMediaPlayerEvent(MFP_EVENT_HEADER * pEventHeader)
 // completes.
 //-------------------------------------------------------------------
 
-void OnMediaItemCreated(MFP_MEDIAITEM_CREATED_EVENT *pEvent)
+static void OnMediaItemCreated(MFP_MEDIAITEM_CREATED_EVENT *pEvent)
 {
     HRESULT hr;// = S_OK;
 
@@ -711,7 +830,7 @@ done:
 // Called when the IMFPMediaPlayer::SetMediaItem method completes.
 //-------------------------------------------------------------------
 
-void OnMediaItemSet(MFP_MEDIAITEM_SET_EVENT * /*pEvent*/)
+static void OnMediaItemSet(MFP_MEDIAITEM_SET_EVENT * /*pEvent*/)
 {
     HRESULT hr;// = S_OK;
 
@@ -724,7 +843,7 @@ void OnMediaItemSet(MFP_MEDIAITEM_SET_EVENT * /*pEvent*/)
 }
 
 
-void ShowErrorMessage(PCWSTR format, HRESULT hrErr)
+static void ShowErrorMessage(PCWSTR format, HRESULT hrErr)
 {
     HRESULT hr;// = S_OK;
     WCHAR msg[MAX_PATH];
@@ -736,3 +855,9 @@ void ShowErrorMessage(PCWSTR format, HRESULT hrErr)
         MessageBox(NULL, msg, L"Error", MB_ICONERROR);
     }
 }
+
+//wchar_t buf[256];
+//FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+//               NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), 
+//               buf, (sizeof(buf) / sizeof(wchar_t)), NULL);
+//printf("%S\n",buf);

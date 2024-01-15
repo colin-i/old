@@ -1,17 +1,18 @@
 
-#was avplayer but was deleted, here is a fast start replacement from https://github.com/microsoft/Windows-classic-samples/tree/main/Samples/Win7Samples/multimedia/mediafoundation
-#can make it work on windows, not on wine
+#start from https://github.com/microsoft/Windows-classic-samples/tree/main/Samples/Win7Samples/multimedia/mediafoundation
+#can make it full work on windows, not on wine
 
-a=0;b=0
 if [ -z "${1}" ]; then
-	a=1;b=1
-elif [ "${1}" = 1 ]; then
-	b=1;d=-g
+	a=1;b=1;z=1
+else
+	a=0;b=1;d=-g
+	z=${1}
 fi
 if [ ${a} = 1 ];then i686-w64-mingw32-windres SimplePlay.rc SimplePlay.o || exit 1; fi
 if [ ${b} = 1 ];then i686-w64-mingw32-g++-win32 -c winmain.cpp -municode ${d} || exit 1; fi
-if [ -z "${2}" ]; then
-	i686-w64-mingw32-g++-win32 SimplePlay.o winmain.o -municode -lshlwapi -lmfplay -lcomdlg32 -lole32 -static-libgcc -static-libstdc++ -lcomctl32 #still need -municode
+i686-w64-mingw32-g++-win32 SimplePlay.o winmain.o -municode -lshlwapi -lmfplay -lcomdlg32 -lole32 -static-libgcc -static-libstdc++ -lcomctl32 #still need -municode
+if [ ${z} = 1 ]; then
+	wine a.exe
 fi
 
 #wine Z:/usr/share/win32/gdbserver.exe localhost:12345 a.exe
