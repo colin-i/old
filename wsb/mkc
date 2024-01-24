@@ -2,3 +2,4 @@
 rm -f wsb.oc.log
 rm -f wsb.o
 rm -f wsb.exe
+rm -f wsb

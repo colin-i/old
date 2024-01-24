@@ -2,12 +2,17 @@
 
 format elfobj
 
-
 include "wsb.h"
 
-import "_printf" printf
-import "_fclose" fclose
-import "_strlen" strlen
+value sync_src=NULL
+value sync_dest=NULL
+value starting_dir=NULL
+
+char sync_dest_data#MAX_PATH
+
+importx "_puts" puts
+importx "_fclose" fclose
+importx "_strlen" strlen
 
 function log_file()
     data file#1
@@ -17,7 +22,7 @@ function log_open()
     sd file_store
     setcall file_store log_file()
     sd file
-    setcall file file_open("filesystem.log","wb")
+    setcall file file_open(".wsb.log","wb")
     set file_store# file
 endfunction
 function log_set(ss pre_text,ss text)
@@ -45,31 +50,35 @@ function templates()
     return #opened_templates
 endfunction
 
+importx "_free" free
+
 function texter(ss msg)
-    call printf(msg)
-    char nl={0xa,0}
-    call printf(#nl)
-    import "_exit" exit
-    call exit(0)
+    call puts(msg)
+	if _main.starting_dir!=(NULL)
+		call free(_main.starting_dir)
+	end
+    importx "_exit" exit
+    call exit(1)
 endfunction
 
-import "_sprintf" sprintf
+importx "_sprintf" sprintf
 
 #file
 function file_open(ss filepath,ss method)
-    import "_fopen" fopen
+    importx "_fopen" fopen
     sd file
     setcall file fopen(filepath,method)
     If file=0
-        char info#MAX_PATH+safe_chars_to_add
+        char info#20+MAX_PATH
         char *=0
         call sprintf(#info,"Cannot open a file: %s",filepath)
+#                           12345678901234567890
         call texter(#info)
     EndIf
     return file
 endfunction
 function file_seek(ss file,sd off,sd method)
-    import "_fseek" fseek
+    importx "_fseek" fseek
     sd seekint
     setcall seekint fseek(file,off,method)
     If seekint!=0
@@ -79,7 +88,7 @@ function file_seek(ss file,sd off,sd method)
 endfunction
 #sz
 function file_tell(sd file)
-    import "_ftell" ftell
+    importx "_ftell" ftell
     sd sz
     setcall sz ftell(file)
     if sz=-1
@@ -88,9 +97,26 @@ function file_tell(sd file)
     endif
     return sz
 endfunction
+#file
+function file_open_dest(sd filename,sv pfile2)
+	sd verify_size
+	set verify_size strlen(filename)
+	sd file
+	setcall file file_open_folders_between(filename,verify_size,"wb",verify_size)
+	if _main.sync_dest!=(NULL)
+		sd out_sync_path
+		sd sizefull
+		set out_sync_path common_path_ex(_main.sync_dest,filename,#sizefull)
+		set pfile2# file_open_folders_between(out_sync_path,sizefull,"wb",verify_size)
+	else
+		set pfile2# (NULL)
+	end
+	return file
+end
+
 #mem
 function memalloc(sd sz)
-    import "_malloc" malloc
+    importx "_malloc" malloc
     sd mem
     SetCall mem malloc(sz)
     If mem=0
@@ -100,7 +126,7 @@ function memalloc(sd sz)
     return mem
 EndFunction
 function file_read(sd file,sd mem,sd size)
-    import "_fread" fread
+    importx "_fread" fread
     sd read
     setcall read fread(mem,1,size,file)
     if read!=size
@@ -109,20 +135,24 @@ function file_read(sd file,sd mem,sd size)
     endif
 endfunction
 
-import "_free" free
-
 function file_write(sd file,sd buffer,sd size)
     if size=0
-        return (void)
+        ret
     endif
-    import "_fwrite" fwrite
+    importx "_fwrite" fwrite
     sd len
     setcall len fwrite(buffer,1,size,file)
     if len!=0
-        return (void)
+        ret
     endif
     str er="File write error"
     call texter(er)
+endfunction
+function file_write_duo(sd file,sd buffer,sd size,sd file2)
+	call file_write(file,buffer,size)
+	if file2!=(NULL)
+		call file_write(file2,buffer,size)
+	end
 endfunction
 
 #pos where the string is in mem
@@ -145,7 +175,7 @@ function str_in_mem_bool(ss str,ss mem,sd len,sd p_pos)
     return (TRUE)
 endfunction
 
-import "_memcmp" memcmp
+importx "_memcmp" memcmp
 #pos where the string is in mem/or all size
 function string_in_mem(ss str,ss mem,sd len,sd p_err)
     set p_err# 0
@@ -172,28 +202,39 @@ function string_in_mem(ss str,ss mem,sd len,sd p_err)
     return len
 endfunction
 
-import "_chdir" chdir
+importx "_chdir" chdir
+importx "_access" access
+importx "_mkdir" mkdir
+
+function dir_make(ss value)
+	sd change
+	sd a;set a access(value,(F_OK))
+	if a=-1
+		sd make
+		setcall make mkdir(value,0700)
+		if make!=0
+			call texter("Mkdir error")
+		endif
+	end
+end
+
+function dirch_simple(ss value)
+	sd change
+	setcall change chdir(value)
+	if change!=0
+#        importx "__get_errno" get_errno
+#        sd err
+#        call get_errno(#err)
+#        if err!=(ENOENT)
+#            call texter("Change dir error")
+#        endif
+		call texter("chdir error")
+	endif
+end
+
 function dirch_nolog(ss value)
-    sd change
-    setcall change chdir(value)
-    if change!=0
-        import "__get_errno" get_errno
-        sd err
-        call get_errno(#err)
-        if err!=(ENOENT)
-            call texter("Change dir error")
-        endif
-        import "_mkdir" mkdir
-        sd make
-        setcall make mkdir(value)
-        if make!=0
-            call texter("Mkdir error")
-        endif
-        setcall change chdir(value)
-        if change!=0
-            call texter("chdir error(after mkdir)")
-        endif
-    endif
+	call dir_make(value)
+	call dirch_simple(value)
 endfunction
 
 function dirch(ss value)
@@ -222,7 +263,12 @@ function loop(ss name,sd p_is_template)
     setcall compare str_compare(back,name)
     if compare=0
         #is back one folder
+
         call dirch(back)
+	if _main.sync_dest!=(NULL)
+		call sync_dest_dir_minus()
+	end
+
         return 0
     endif
     str template_end="!"
@@ -264,7 +310,12 @@ function loop(ss name,sd p_is_template)
                     #is a folder name, and the file is index.php from inside the folder
                     dec cursor
                     set cursor# 0
+
                     call dirch(name)
+			if _main.sync_dest!=(NULL)
+				call sync_dest_dir_plus(name)
+			end
+
                     set cursor# dot
                     return "index.php"
                 endif
@@ -289,21 +340,33 @@ function loop(ss name,sd p_is_template)
     return name
 endfunction
 #filepath
-function src_path(ss filename)
+function common_path_ex(sd dirname,sd basename,sd psize)
     char path#MAX_PATH
     #
-    ss dest
-    setcall dest src_folder()
     sd sz
-    setcall sz strlen(dest)
+    setcall sz strlen(dirname)
     #
-    addcall sz strlen(filename)
-    inc sz
-    if sz>(MAX_PATH)
+    addcall sz strlen(basename)
+    if sz>=^(MAX_PATH_withoutNul)
         call texter("error data_open")
     endif
-    call sprintf(#path,"%s%s",dest,filename)
+    call sprintf(#path,"%s%s",dirname,basename)
+	if psize!=(NULL)
+		set psize# sz    ##in most of the cases strlen is required outside
+	end
     return #path
+end
+#filepath
+function common_path(sd dirname,sd basename)
+	sd p;setcall p common_path_ex(dirname,basename,(NULL))
+	return p
+end
+#filepath
+function src_path(ss filename)
+	sd src
+	setcall src src_folder()
+	sd p;set p common_path(src,filename)
+	return p
 endfunction
 #file
 function src_open(ss filename)
@@ -337,6 +400,9 @@ function src_get_template(ss filename,sd containers)
     setcall mem memalloc(len)
     call file_read(file,mem,len)
     call fclose(file)
+
+	call sync_src_fn(filename,mem,len)
+
     sd t_cursor
     set t_cursor containers
     while t_cursor#!=0
@@ -376,32 +442,12 @@ function file_get_content(ss filename,sd p_len)
     set p_len# len
     return mem
 endfunction
-function file_get_content_forward(ss filename,sd forward)
-     call file_get_content_forward_data(filename,forward,0)
-endfunction
-function file_get_content_forward_data(ss filename,sv forward,sd data)
-    sd mem
-    sd len
-    setcall mem file_get_content(filename,#len)
-    call forward(mem,len,data)
-    call free(mem)
-endfunction
-
-function cpymem(ss dest,ss src,sd size)
-    while size!=0
-        set dest# src#
-        inc dest
-        inc src
-        dec size
-    endwhile
-endfunction
 
 function p_dest_folder()
     data p#1
     return #p
 endfunction
 function dest_folder()
-    #chars src#MAX_PATH
     sd p;setcall p p_dest_folder()
     return p#
 endfunction
@@ -411,7 +457,6 @@ function p_src_folder()
     return #p
 endfunction
 function src_folder()
-    #chars dest#MAX_PATH
     sd p;setcall p p_src_folder()
     return p#
 endfunction
@@ -450,7 +495,7 @@ function files_set(ss mem,sd size)
     ss files
     setcall files files_pointer()
     add files files_size
-    set files# 0
+    set files# 0      #this was for a long time. since sync dest, strlen the plus folder
 endfunction
 function files_set_value(ss new_data,sd pos)
     sd sizer
@@ -488,30 +533,31 @@ function files_set_value(ss new_data,sd pos)
         call texter("size limit at files error")
     endif
     #
-    call cpymem(files,new_data,new_len)
+    call memcpy(files,new_data,new_len)
     #
     return new_len
 endfunction
 
 #true if match or false
 Function filepathdelims(ss str)
-        char bslash="\\"
-        char slash="/"
-        If str#=bslash
+	If str#=(asciibackslash)
                 Return (TRUE)
         EndIf
-        If str#=slash
+	If str#=(asciislash)
                 Return (TRUE)
         EndIf
         Return (FALSE)
 EndFunction
 
-function replacements(sd p_cursor,sd file_out)
+function replacements(sd p_cursor,sd file_out,sd file_out_sync)
     ss entry_mem
     sd entry_len
     ss file_srcpath
     setcall file_srcpath src_path(p_cursor#)
     setcall entry_mem file_get_content(file_srcpath,#entry_len)
+
+	call sync_src_fn(p_cursor#,entry_mem,entry_len)
+
     ss entry_start
     set entry_start entry_mem
     ss t_str
@@ -520,12 +566,12 @@ function replacements(sd p_cursor,sd file_out)
     sd bool=1
     while bool=1
         setcall bool str_in_mem_bool(t_str,entry_mem,entry_len,#pos)
-        call file_write(file_out,entry_mem,pos)
+        call file_write_duo(file_out,entry_mem,pos,file_out_sync)
         if bool=1
             addcall p_cursor# strlen(p_cursor#)
             inc p_cursor#
             #recursive call; the replacement can have it's own replacements
-            call replacements(p_cursor,file_out)
+            call replacements(p_cursor,file_out,file_out_sync)
             #advance to the next piece to write
             add entry_mem pos
             sub entry_len pos
@@ -554,48 +600,198 @@ function get_src_dest(ss cursor,sd p_line)
     return cursor
 endfunction
 
-entry _main(data argc,data argv)
+#cursor
+function get_alt(ss cursor)
+#0 at new lines was analyzed before
+	if cursor#!=(asciislash)
+		if cursor#!=(asciibackslash)
+			return cursor
+		end
+	end
+	if cursor#=(asciislash)
+		#set sync src
+		inc cursor
+		set _main.sync_src cursor
+	else
+		#set sync dest
+		inc cursor
+		set _main.sync_dest cursor
+	end
+	while cursor#!=0
+		inc cursor
+	end
+	while cursor#=0
+		inc cursor
+	end
+	return cursor
+end
 
-#go to script folder
-import "_GetModuleFileNameA@12" GetModuleFileName
-char full_path#MAX_PATH
-sd size
-setcall size GetModuleFileName(0,#full_path,(MAX_PATH))
-if size=0
-    call texter("GetModuleFileName Error.")
-endif
-ss pointer
-set pointer #full_path
-add pointer size
-sd bool=FALSE
-while bool=(FALSE)
-    dec pointer
-    setcall bool filepathdelims(pointer)
-    if bool=(TRUE)
-        set pointer# 0
-    elseif pointer=#full_path
-        set bool (TRUE)
-    endelseif
-endwhile
-call dirch_nolog(#full_path)
+function sync_dest_dir_plus(sd plus)
+	sd sz
+	set sz strlen(_main.sync_dest)
+	sd szplus
+	set szplus strlen(plus)
 
-call log_open()
-#call file_get_content_forward("src.txt",dest_folder_set)
-#call file_get_content_forward("dest.txt",src_folder_set)
+	ss from
+	set from sz
+	add from _main.sync_dest
+	add sz szplus
+	if sz<^(MAX_PATH_withoutNul+1)  ##+1 for slash, btw will error later if at max here
+		call memcpy(from,plus,szplus)
+		add from szplus
+		set from# (asciislash)
+		inc from
+		set from# (asciinul)
+		call dir_make(_main.sync_dest)
+		ret
+	end
+	call texter("error at sync dest")
+end
+function sync_dest_dir_minus(sd plus)
+	ss c;set c strlen(_main.sync_dest)
+	add c _main.sync_dest
+	dec c   ##was a plus/ (is a slash at end)
+	while c!=_main.sync_dest   ##can .. anytime and infinite loop here
+		dec c
+		if c#=(asciislash)
+			inc c
+			set c# (asciinul)
+			ret
+		end
+	end
+	set c# (asciinul)  #only when sync'ing in "" folder
+end
+
+#file
+function file_open_folders_between(ss filename,sd bigsize,sd method,ss smallsize)
+	add bigsize filename
+	neg smallsize
+	add smallsize bigsize
+	while smallsize!=bigsize
+		inc smallsize   ##ignoring if is in first place? mkdir("/")?
+		sd b;set b filepathdelims(smallsize)
+		if b=(TRUE)
+			set smallsize# (asciinul)
+			call dir_make(filename)
+			set smallsize# (asciislash)
+		end
+	end
+	sd file
+	setcall file file_open(filename,"wb")
+	return file
+end
+
+function sync_src_fn(ss filename,sd mem,sd len)
+	if _main.sync_src!=(NULL)
+	#at src file is user fullpath
+		sd folders_verify_size
+		set folders_verify_size strlen(filename)
+		sd sizefull
+		sd p;set p common_path_ex(_main.sync_src,filename,#sizefull)
+		sd file
+		setcall file file_open_folders_between(p,sizefull,"wb",folders_verify_size)
+		call file_write(file,mem,len)
+		call fclose(file)
+	end
+end
+
+include "win.h" "lin.h"
+
 if argc<2
     call texter("file argument expected")
 endif
-add argv (DWORD)
+
+#go to log folder
+#sd size
+#ss pointer
+#ss start
+
+##char full_path#MAX_PATH
+##importx "_GetModuleFileNameA@12" GetModuleFileName
+##setcall size GetModuleFileName(0,#full_path,(MAX_PATH))
+##if size=0
+##    call texter("GetModuleFileName Error.")
+##endif
+##set start #full_path
+
+#set start argv#
+#setcall size strlen(start)
+
+#set pointer start
+#add pointer size
+#sd bool=FALSE
+#while bool=(FALSE)
+#    dec pointer
+#    setcall bool filepathdelims(pointer)
+#    if bool=(TRUE)
+#        set pointer# 0
+#    elseif pointer=start
+#        set bool (TRUE)
+#    endelseif
+#endwhile
+#call dirch_nolog(start)
+
+incst argv
 #"files.txt"
-call file_get_content_forward(argv#,files_set)
+sd mem_main
+sd len
+setcall mem_main file_get_content(argv#,#len)
+call files_set(mem_main,len)
+call free(mem_main)
 
 ss cursor
 setcall cursor files_pointer()
 
-ss p_src;setcall p_src p_src_folder()
+sv p_src;setcall p_src p_src_folder()
 setcall cursor get_src_dest(cursor,p_src)
-ss p_dest;setcall p_dest p_dest_folder()
+sv p_dest;setcall p_dest p_dest_folder()
 setcall cursor get_src_dest(cursor,p_dest)
+sd tmp
+set tmp cursor
+setcall cursor get_alt(cursor)
+if tmp!=cursor
+	setcall cursor get_alt(cursor)
+end
+
+if sync_dest!=(NULL)
+	#this path will follow dest chdirs too
+	sd ds_len
+	set ds_len strlen(sync_dest)
+	inc ds_len
+	if ds_len>^(MAX_PATH)
+		call texter("sync dest big size")
+	end
+	importx "_memcpy" memcpy
+	call memcpy(#sync_dest_data,sync_dest,ds_len)
+	set sync_dest #sync_dest_data
+end
+
+#log file
+#store current folder to come back
+importx "_getcwd" getcwd
+set starting_dir getcwd((NULL),0)
+#
+importx "_getenv" getenv
+sd e;vstr home_e="home error"
+set e getenv("HOMEDRIVE")
+if e!=(NULL)
+	call dirch_simple(e)
+	set e getenv("HOMEPATH")
+	if e!=(NULL)
+		call dirch_simple(e)
+	else
+		call texter(home_e)
+	end
+else
+	set e getenv("HOME")
+	if e!=(NULL)
+		call dirch_simple(e)
+	else
+		call texter(home_e)
+	end
+end
+call log_open()
+call dirch_simple(starting_dir)
 
 ss root
 setcall root dest_folder()
@@ -616,8 +812,8 @@ while cursor#!=0
             ss mem
             sd sz
             call log_set("F ",filename)
-            sd file
-            setcall file file_open(filename,"wb")
+            sd file;sd file_sync
+            setcall file file_open_dest(filename,#file_sync)
             #
             set t_cursor templates_data
             sd t_start
@@ -628,11 +824,11 @@ while cursor#!=0
                 set sz t_cursor#
                 add t_cursor (DWORD)
                 add t_cursor (DWORD)
-                call file_write(file,mem,sz)
+                call file_write_duo(file,mem,sz,file_sync)
             endwhile
             #write main
             #look for forward replacements
-            call replacements(#cursor,file)
+            call replacements(#cursor,file,file_sync)
             #
             while t_cursor!=t_start
                 sub t_cursor (DWORD)
@@ -644,7 +840,7 @@ while cursor#!=0
                 set mem t_cursor#
                 add mem prev_sz
                 addcall mem template_string_length()
-                call file_write(file,mem,sz)
+                call file_write_duo(file,mem,sz,file_sync)
             endwhile
         endelse
     endif
@@ -652,4 +848,4 @@ while cursor#!=0
     inc cursor
 endwhile
 call log_close()
-return 1
+return 0

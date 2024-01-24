@@ -1,5 +1,15 @@
-C:\Desktop\websitebuilder\files\
-D:\x\dest
+/home/bc/old/wsb/files/
+./dest/
+//home/bc/old/wsb/sync/files/
+\/home/bc/old/wsb/sync/dest/
+
+#first row is the source path
+#only second row can be relative, the destination path, second row
+#note at third and fourth rows:
+#					 these two rows are optional
+#					 a slash is copy source to sync/files folder
+#					 a backslash is copy destination to sync/dest folder
+
 #A site model example, this file is parsed by the program
 simple.container
     univ_table.php

@@ -1,4 +1,11 @@
 
-o wsb.oc inplace_reloc 0
-ounused wsb.oc.log
-i686-w64-mingw32-gcc-win32 wsb.o -o wsb.exe
+if [ -z "${1}" ]; then
+	o wsb.oc underscore_pref 1 include_sec 1 exit_end 1
+	ounused wsb.oc.log
+	#objcopy --redefine-sym _main=main wsb.o  #this will mess and can't use with inplace_reloc false either
+	ld -m elf_i386 wsb.o -o wsb -lc -entry _main --dynamic-linker=/lib/ld-linux.so.2
+else
+	o wsb.oc inplace_reloc 0
+	ounused wsb.oc.log
+	i686-w64-mingw32-gcc-win32 wsb.o -o wsb.exe
+fi
