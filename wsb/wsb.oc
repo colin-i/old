@@ -8,7 +8,7 @@ value sync_src=NULL
 value sync_dest=NULL
 value starting_dir=NULL
 
-char sync_dest_data#MAX_PATH
+charx sync_dest_data#MAX_PATH
 
 importx "_puts" puts
 importx "_fclose" fclose
@@ -69,7 +69,7 @@ function file_open(ss filepath,ss method)
     sd file
     setcall file fopen(filepath,method)
     If file=0
-        char info#20+MAX_PATH
+        charx info#20+MAX_PATH
         char *=0
         call sprintf(#info,"Cannot open a file: %s",filepath)
 #                           12345678901234567890
@@ -316,7 +316,7 @@ function loop(ss name,sd p_is_template)
 				call sync_dest_dir_plus(name)
 			end
 
-                    set cursor# dot
+                    set cursor# dot    ##will be index.php in dest and get name.dir file from src
                     return "index.php"
                 endif
                 #is a file 1
@@ -341,7 +341,7 @@ function loop(ss name,sd p_is_template)
 endfunction
 #filepath
 function common_path_ex(sd dirname,sd basename,sd psize)
-    char path#MAX_PATH
+    charx path#MAX_PATH
     #
     sd sz
     setcall sz strlen(dirname)
@@ -428,7 +428,7 @@ function src_get_template(ss filename,sd containers)
 endfunction
 
 #mem
-function file_get_content(ss filename,sd p_len)
+function file_get_content_ex(ss filename,sd p_len,sd add)
     sd file
     setcall file file_open(filename,"rb")
     call file_seek(file,0,(SEEK_END))
@@ -436,7 +436,9 @@ function file_get_content(ss filename,sd p_len)
     setcall len file_tell(file)
     call file_seek(file,0,(SEEK_SET))
     sd mem
+	add len add
     setcall mem memalloc(len)
+	sub len add
     call file_read(file,mem,len)
     call fclose(file)
     set p_len# len
@@ -461,9 +463,10 @@ function src_folder()
     return p#
 endfunction
 
-const files_size=100*100
+#                123456
+const files_size=999999
 function files_pointer()
-    char files#files_size
+    charx files#files_size
     return #files
 endfunction
 function files_set(ss mem,sd size)
@@ -488,7 +491,11 @@ function files_set(ss mem,sd size)
     endwhile
     if nl=1
         addcall files_size files_set_value(entry,files_size)
-    endif
+	else
+		inc mem     ##is safe, this mem was +1 alloc'ed
+		set mem# 0
+		addcall files_size files_set_value(entry,files_size)
+	end
     if files_size=(files_size)
         call texter("size limit at last char at files error")
     endif
@@ -554,7 +561,7 @@ function replacements(sd p_cursor,sd file_out,sd file_out_sync)
     sd entry_len
     ss file_srcpath
     setcall file_srcpath src_path(p_cursor#)
-    setcall entry_mem file_get_content(file_srcpath,#entry_len)
+    setcall entry_mem file_get_content_ex(file_srcpath,#entry_len,0)
 
 	call sync_src_fn(p_cursor#,entry_mem,entry_len)
 
@@ -570,8 +577,10 @@ function replacements(sd p_cursor,sd file_out,sd file_out_sync)
         if bool=1
             addcall p_cursor# strlen(p_cursor#)
             inc p_cursor#
+
             #recursive call; the replacement can have it's own replacements
             call replacements(p_cursor,file_out,file_out_sync)
+
             #advance to the next piece to write
             add entry_mem pos
             sub entry_len pos
@@ -735,7 +744,7 @@ incst argv
 #"files.txt"
 sd mem_main
 sd len
-setcall mem_main file_get_content(argv#,#len)
+setcall mem_main file_get_content_ex(argv#,#len,1)
 call files_set(mem_main,len)
 call free(mem_main)
 
@@ -842,6 +851,10 @@ while cursor#!=0
                 addcall mem template_string_length()
                 call file_write_duo(file,mem,sz,file_sync)
             endwhile
+		call fclose(file)  #on linux is important
+		if file_sync!=(NULL)
+			call fclose(file_sync)
+		end
         endelse
     endif
     addcall cursor strlen(cursor)

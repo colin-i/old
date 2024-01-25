@@ -1,26 +1,38 @@
-/home/bc/old/wsb/files/
-./dest/
-//home/bc/old/wsb/sync/files/
-\/home/bc/old/wsb/sync/dest/
+
 
 #first row is the source path
-#only second row can be relative, the destination path, second row
-#note at third and fourth rows:
-#					 these two rows are optional
-#					 a slash is copy source to sync/files folder
-#					 a backslash is copy destination to sync/dest folder
+/home/bc/arh/sites/files/
+
+#only second row can be relative, the destination path
+./dest/
+
+
+#third and fourth rows are optional
+
+#a slash is: copy source to ..sync/src folder
+//home/bc/old/wsb/sync/src/
+
+#a backslash is: copy destination to ..sync/dest folder
+\/home/bc/old/wsb/sync/dest/
+
 
 #A site model example, this file is parsed by the program
+
 simple.container
+#the container has a <!-- -->
     univ_table.php
     univ_table_entry.php
+    #univ_table_entry has a <!-- --> so one child is expected
         univ_table.php
 !
 html.container
     no_ad.container
         donations.html
+        #this will change to or make folder programs, and then index.php
         prezentare.dir
+            #here is index.php
         ..
+        #back from programs to dest folder
     !
 !
 main.container
@@ -31,17 +43,17 @@ main.container
             index.php
                 display_swf.php
             screenshots.php
-            #this will change to or make folder programs, and then index.php
             programs.dir
+                #here programs.dir has <!-- -->, then index.php will have app.php, then video.php will be the second file
                 app.php
                 video.php
-                #back from programs to dest folder
             ..
             games.dir
-                        swfs_disp.php
-                #
-                        play.php
-                            display_swf.php
+                #same as programs.dir
+                swfs_disp.php
+                play.php
+                    display_swf.php
+                #the second file was play.php
             ..
             messages.dir
                 message.php
@@ -52,20 +64,16 @@ main.container
         !
     !
 !
-missing.php
-#.container if in a replacement is like a file
-    main.container
-        html.container
-            404.php
-                contact.php
 main.container
     html.container
         ad.container
             tutorials.dir
                 wow.dir
+                    #is index.php here
         !
     !
 !
+                    #here is in wow.dir, new containers structure
                     ip_guard.container
                         html.container
                             ad.container
@@ -78,4 +86,9 @@ main.container
                     !
                 ..
             ..
-#only rows that ends with a carriage return and/or line feed are counted
+missing.php
+    #.container if in a replacement is like a file
+    main.container
+        html.container
+            404.php
+                contact.php
