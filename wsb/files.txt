@@ -9,11 +9,11 @@
 
 #third and fourth rows are optional
 
-#a slash is: copy source to ..sync/src folder
-//home/bc/old/wsb/sync/src/
+#a slash-slash is: copy source to ..sync/src folder
+///home/bc/old/wsb/sync/src/
 
-#a backslash is: copy destination to ..sync/dest folder
-\/home/bc/old/wsb/sync/dest/
+#a slash-backslash is: copy destination to ..sync/dest folder
+/\/home/bc/old/wsb/sync/dest/
 
 
 #A site model example, this file is parsed by the program

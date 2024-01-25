@@ -612,27 +612,30 @@ endfunction
 #cursor
 function get_alt(ss cursor)
 #0 at new lines was analyzed before
-	if cursor#!=(asciislash)
-		if cursor#!=(asciibackslash)
-			return cursor
-		end
-	end
+	ss start
+	set start cursor
 	if cursor#=(asciislash)
-		#set sync src
 		inc cursor
-		set _main.sync_src cursor
-	else
-		#set sync dest
-		inc cursor
-		set _main.sync_dest cursor
+		if cursor#=(asciislash)
+			#set sync src
+			inc cursor
+			set _main.sync_src cursor
+		elseif cursor#=(asciibackslash)
+			#set sync dest
+			inc cursor
+			set _main.sync_dest cursor
+		else
+			return start
+		end
+		while cursor#!=0
+			inc cursor
+		end
+		while cursor#=0
+			inc cursor
+		end
+		return cursor
 	end
-	while cursor#!=0
-		inc cursor
-	end
-	while cursor#=0
-		inc cursor
-	end
-	return cursor
+	return start
 end
 
 function sync_dest_dir_plus(sd plus)
