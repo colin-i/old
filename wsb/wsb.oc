@@ -505,44 +505,33 @@ function files_set(ss mem,sd size)
     set files# 0      #this was for a long time. since sync dest, strlen the plus folder
 endfunction
 function files_set_value(ss new_data,sd pos)
-    sd sizer
-    setcall sizer strlen(new_data)
-    while sizer!=0
-        dec sizer
-        if new_data#=0x9
-            inc new_data
-        elseif new_data#=0x20
-            inc new_data
-        else
-            set sizer 0
-        endelse
-    endwhile
-    sd new_len
-    setcall new_len strlen(new_data)
-    if new_len=0
-        #just tabs/spaces on this row
-        return 0
-    endif
-    inc new_len
-    #
-    char comment="#"
-    if new_data#=comment
-        #a comment row
-        return 0
-    endif
-    #
-    sd files
-    setcall files files_pointer()
-    add files pos
-    #
-    add pos new_len
-    if pos>(files_size)
-        call texter("size limit at files error")
-    endif
-    #
-    call memcpy(files,new_data,new_len)
-    #
-    return new_len
+	sd new_len
+	setcall new_len strlen(new_data)
+	while new_len!=0
+		if new_data#=0x9
+			inc new_data
+		elseif new_data#=0x20
+			inc new_data
+		else
+			break
+		endelse
+		dec new_len
+	endwhile
+	if new_len!=0  #just tabs/spaces on this row if not
+		if new_data#!=(asciinumber) ##a comment row
+			sd files
+			setcall files files_pointer()
+			add files pos
+			add pos new_len
+			if pos>(files_size)
+				call texter("size limit at files error")
+			endif
+			inc new_len
+			call memcpy(files,new_data,new_len)
+			return new_len
+		end
+	end
+	return 0
 endfunction
 
 #true if match or false

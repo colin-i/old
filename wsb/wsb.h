@@ -20,5 +20,6 @@ Const SEEK_END=2
 Const F_OK=0
 
 Const asciinul=0x0
-const asciislash=0x2F
+Const asciinumber=0x23
+Const asciislash=0x2F
 Const asciibackslash=0x5C
