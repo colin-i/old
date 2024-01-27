@@ -599,13 +599,11 @@ function get_src_dest(ss cursor,sd p_line)
         call texter("src/dest files expected")
     endif
     set p_line# cursor
-    #aicea deja s-a analizat si s-a marcat cu 0 la liniile noi
     while cursor#!=0
         inc cursor
     endwhile
-    while cursor#=0
-        inc cursor
-    endwhile
+	#it's ok, comments and new lines are out already, and last line has 0
+	inc cursor
     return cursor
 endfunction
 
@@ -630,9 +628,7 @@ function get_alt(ss cursor)
 		while cursor#!=0
 			inc cursor
 		end
-		while cursor#=0
-			inc cursor
-		end
+		inc cursor
 		return cursor
 	end
 	return start
