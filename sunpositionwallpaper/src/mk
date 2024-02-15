@@ -2,7 +2,8 @@
 items=( file main net numbers obj operations tray visual wallpapers )
 for var in "${items[@]}"; do
 	if [ -z "${1}" ]; then
-		a="o ${var}.oc inplace_reloc 0"
+		if [ -z "${OCOMP}" ]; then OCOMP=o; fi
+		a="${OCOMP} ${var}.oc inplace_reloc 0"
 		echo ${a}
 		${a} || exit 1
 	else
