@@ -155,13 +155,14 @@ function updates_proc(sd con_socket)
     set next con_socket
     inc next
     setcall res select(next,#fd_set_recv,0,0,#tv_recv)
-    if res=0
+	if res=0
         call texter(timeout)
         return (void)
-    elseif res=(SOCKET_ERROR)
+	endif
+	if res=(SOCKET_ERROR)
         call texter(sel_err)
         return (void)
-    endelseif
+	endif
 
     #data must be here, so do a normal recv()
     importx "_recv@16" recv

@@ -7,11 +7,12 @@ Function numeric(char c)
         char nine="9"
         Data false=0
         Data true=1
-        If c<zero
+	If c<zero
                 Return false
-        ElseIf c>nine
+	endif
+	If c>nine
                 Return false
-        EndElseIf
+	EndIf
         Return true
 EndFunction
 

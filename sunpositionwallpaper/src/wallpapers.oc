@@ -81,7 +81,7 @@ if method=0
     import "texter_warning" texter_warning
 
     #time
-    if timesindex=1
+	if timesindex=1
         data ptr_t^timevalue
         sd bool
         setcall bool strtoint_positive(time_str,ptr_t)
@@ -139,7 +139,7 @@ if method=0
         add tm_hr tmhr
 
         return (noerror)
-    else
+	endif
     #key times
         char sep=":"
         sd sz
@@ -199,8 +199,8 @@ if method=0
         endelse
 
         return (noerror)
-    endelse
-elseif method=1
+endif
+if method=1
 #0 for not relaunching the timeout
     if timevalue=UTCmidnight
         setcall bool actions(5)
@@ -252,7 +252,7 @@ elseif method=1
     import "_gdk_threads_add_timeout" gdk_threads_add_timeout
     call gdk_threads_add_timeout(nextcall,f,1)
     return 0
-else
+endif
 #method=2, next duration
     import "_time" time
     sd currenttime
@@ -304,7 +304,6 @@ else
     import "_sprintf" sprintf
     call sprintf(spaces,format_spc,trail,hr,min,sec)
     call texter(spaces,(GTK_MESSAGE_INFO))
-endelse
 endfunction
 
 #e
