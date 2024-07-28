@@ -441,7 +441,7 @@ EndFunction
 #bool
 import "_chdir" chdir
 function dirch(ss value)
-    sd change
+    datax change#1
     setcall change chdir(value)
     if change!=0
         str chdirerr="Change dir error"

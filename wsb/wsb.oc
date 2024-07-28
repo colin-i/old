@@ -102,12 +102,12 @@ function file_open_dest(sd filename,sv pfile2)
 	sd verify_size
 	set verify_size strlen(filename)
 	sd file
-	setcall file file_open_folders_between(filename,verify_size,"wb",verify_size)
+	setcall file file_open_folders_between(filename,verify_size,verify_size)
 	if _main.sync_dest!=(NULL)
 		sd out_sync_path
 		sd sizefull
 		set out_sync_path common_path_ex(_main.sync_dest,filename,#sizefull)
-		set pfile2# file_open_folders_between(out_sync_path,sizefull,"wb",verify_size)
+		set pfile2# file_open_folders_between(out_sync_path,sizefull,verify_size)
 	else
 		set pfile2# (NULL)
 	end
@@ -207,19 +207,17 @@ importx "_access" access
 importx "_mkdir" mkdir
 
 function dir_make(ss value)
-	sd change
-	sd a;set a access(value,(F_OK))
-	if a=-1
-		sd make
-		setcall make mkdir(value,0700)
-		if make!=0
+	datax int#1;set int access(value,(F_OK))
+	if int=-1
+		setcall int mkdir(value,0700)
+		if int!=0
 			call texter("Mkdir error")
 		endif
 	end
 end
 
 function dirch_simple(ss value)
-	sd change
+	datax change#1
 	setcall change chdir(value)
 	if change!=0
 #        importx "__get_errno" get_errno
@@ -644,7 +642,7 @@ function sync_dest_dir_plus(sd plus)
 	end
 	call texter("error at sync dest")
 end
-function sync_dest_dir_minus(sd plus)
+function sync_dest_dir_minus()
 	ss c;set c strlen(_main.sync_dest)
 	add c _main.sync_dest
 	dec c   ##was a plus/ (is a slash at end)
@@ -660,7 +658,7 @@ function sync_dest_dir_minus(sd plus)
 end
 
 #file
-function file_open_folders_between(ss filename,sd bigsize,sd method,ss smallsize)
+function file_open_folders_between(ss filename,sd bigsize,ss smallsize)
 	add bigsize filename
 	neg smallsize
 	add smallsize bigsize
@@ -686,7 +684,7 @@ function sync_src_fn(ss filename,sd mem,sd len)
 		sd sizefull
 		sd p;set p common_path_ex(_main.sync_src,filename,#sizefull)
 		sd file
-		setcall file file_open_folders_between(p,sizefull,"wb",folders_verify_size)
+		setcall file file_open_folders_between(p,sizefull,folders_verify_size)
 		call file_write(file,mem,len)
 		call fclose(file)
 	end
