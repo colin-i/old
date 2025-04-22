@@ -3,7 +3,7 @@
 
 format elfobj
 
-include "constants.h"
+include "constants.oh"
 
 function pack_default(sd box,sd widget)
     import "_gtk_box_pack_start" gtk_box_pack_start

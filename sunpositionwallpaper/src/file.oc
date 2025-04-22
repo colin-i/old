@@ -3,7 +3,7 @@
 
 format elfobj
 
-include "constants.h"
+include "constants.oh"
 
 import "texter_warning" texter_warning
 

@@ -1,7 +1,7 @@
 
 format elfobj
 
-include "constants.h"
+include "constants.oh"
 
 ##icon
 import "_gtk_window_set_icon" gtk_window_set_icon

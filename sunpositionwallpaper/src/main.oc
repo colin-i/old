@@ -4,7 +4,7 @@
 
 format elfobj
 
-include "constants.h"
+include "constants.oh"
 
 functionx _WinMain@16()
     import "_gtk_init" gtk_init

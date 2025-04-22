@@ -5,7 +5,7 @@
 
 format elfobj
 
-include "./constants.h"
+include "./constants.oh"
 
 import "valinmem" valinmem
 

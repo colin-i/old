@@ -2,7 +2,7 @@
 
 format elfobj
 
-include "../include/wsb.h"
+include "../include/wsb.oh"
 
 importx "_gtk_init" gtk_init
 importx "_gtk_window_new" gtk_window_new

@@ -4,7 +4,7 @@
 
 format elfobj
 
-include "./constants.h"
+include "./constants.oh"
 
 import "_soup_session_sync_new" soup_session_sync_new
 import "_soup_message_new" soup_message_new

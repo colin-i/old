@@ -2,7 +2,7 @@
 
 format elfobj
 
-include "wsb.h"
+include "wsb.oh"
 
 value sync_src=NULL
 value sync_dest=NULL
@@ -690,7 +690,7 @@ function sync_src_fn(ss filename,sd mem,sd len)
 	end
 end
 
-include "win.h" "lin.h"
+include "win.oh" "lin.oh"
 
 if argc<2
     call texter("file argument expected")

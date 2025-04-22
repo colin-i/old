@@ -2,7 +2,7 @@
 
 format elfobj
 
-include "./constants.h"
+include "./constants.oh"
 
 import "getptr_settings_tray" getptr_settings_tray
 
