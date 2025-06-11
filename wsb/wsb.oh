@@ -4,7 +4,7 @@
 const FALSE=0
 const TRUE=1
 
-const DWORD=4
+#const DWORD=4
 
 const MAX_PATH=260
 const MAX_PATH_withoutNul=MAX_PATH-1

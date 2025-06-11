@@ -1,6 +1,6 @@
 
 
-format elfobj
+format elfobj64
 
 include "wsb.oh"
 
@@ -15,18 +15,18 @@ importx "_fclose" fclose
 importx "_strlen" strlen
 
 function log_file()
-    data file#1
+    valuexu file#1
     return #file
 endfunction
 function log_open()
-    sd file_store
+    sv file_store
     setcall file_store log_file()
     sd file
     setcall file file_open(".wsb.log","wb")
     set file_store# file
 endfunction
 function log_set(ss pre_text,ss text)
-    sd file_store
+    sv file_store
     setcall file_store log_file()
     sd sz
     setcall sz strlen(pre_text)
@@ -37,16 +37,16 @@ function log_set(ss pre_text,ss text)
     call file_write(file_store#,#nl,2)
 endfunction
 function log_close()
-    sd file_store
+    sv file_store
     setcall file_store log_file()
     call fclose(file_store#)
 endfunction
 
-const template_data_size=3*DWORD
+const template_data_size=3*:
 
 function templates()
     #stored templates: mem,first_part_size,rest_of_size;.....0
-    data opened_templates#template_data_size*10
+    value opened_templates#template_data_size*10
     return #opened_templates
 endfunction
 
@@ -54,8 +54,8 @@ importx "_free" free
 
 function texter(ss msg)
     call puts(msg)
-	if _main.starting_dir!=(NULL)
-		call free(_main.starting_dir)
+	if main.starting_dir!=(NULL)
+		call free(main.starting_dir)
 	end
     importx "_exit" exit
     call exit(1)
@@ -82,7 +82,7 @@ function file_seek(ss file,sd off,sd method)
     sd seekint
     setcall seekint fseek(file,off,method)
     If seekint!=0
-        str seekerr="File seek error"
+        vstr seekerr="File seek error"
         call texter(seekerr)
     endif
 endfunction
@@ -92,7 +92,7 @@ function file_tell(sd file)
     sd sz
     setcall sz ftell(file)
     if sz=-1
-        str ftellerr="File tell error"
+        vstr ftellerr="File tell error"
         call texter(ftellerr)
     endif
     return sz
@@ -103,10 +103,10 @@ function file_open_dest(sd filename,sv pfile2)
 	set verify_size strlen(filename)
 	sd file
 	setcall file file_open_folders_between(filename,verify_size,verify_size)
-	if _main.sync_dest!=(NULL)
+	if main.sync_dest!=(NULL)
 		sd out_sync_path
 		sd sizefull
-		set out_sync_path common_path_ex(_main.sync_dest,filename,#sizefull)
+		set out_sync_path common_path_ex(main.sync_dest,filename,#sizefull)
 		set pfile2# file_open_folders_between(out_sync_path,sizefull,verify_size)
 	else
 		set pfile2# (NULL)
@@ -120,7 +120,7 @@ function memalloc(sd sz)
     sd mem
     SetCall mem malloc(sz)
     If mem=0
-        str newmem="Malloc failed"
+        vstr newmem="Malloc failed"
         call texter(newmem)
     endif
     return mem
@@ -130,7 +130,7 @@ function file_read(sd file,sd mem,sd size)
     sd read
     setcall read fread(mem,1,size,file)
     if read!=size
-        str er="Read length is different or error"
+        vstr er="Read length is different or error"
         call texter(er)
     endif
 endfunction
@@ -145,7 +145,7 @@ function file_write(sd file,sd buffer,sd size)
     if len!=0
         ret
     endif
-    str er="File write error"
+    vstr er="File write error"
     call texter(er)
 endfunction
 function file_write_duo(sd file,sd buffer,sd size,sd file2)
@@ -166,7 +166,7 @@ function str_in_mem(ss str,ss mem,sd len)
     return pos
 endfunction
 #bool
-function str_in_mem_bool(ss str,ss mem,sd len,sd p_pos)
+function str_in_mem_bool(ss str,ss mem,sd len,sv p_pos)
     ss err
     setcall p_pos# string_in_mem(str,mem,len,#err)
     if err!=0
@@ -177,7 +177,7 @@ endfunction
 
 importx "_memcmp" memcmp
 #pos where the string is in mem/or all size
-function string_in_mem(ss str,ss mem,sd len,sd p_err)
+function string_in_mem(ss str,ss mem,sd len,sv p_err)
     set p_err# 0
     sd sz
     setcall sz strlen(str)
@@ -255,27 +255,27 @@ function str_compare(ss str1,ss str2)
 endfunction
 
 #filename/0
-function loop(ss name,sd p_is_template)
-    str back=".."
+function loop(ss name,ss p_is_template)
+    vstr back=".."
     sd compare
     setcall compare str_compare(back,name)
     if compare=0
         #is back one folder
 
         call dirch(back)
-	if _main.sync_dest!=(NULL)
+	if main.sync_dest!=(NULL)
 		call sync_dest_dir_minus()
 	end
 
         return 0
     endif
-    str template_end="!"
+    vstr template_end="!"
     setcall compare str_compare(template_end,name)
     if compare=0
         #is template end
-        sd templates_data
+        sv templates_data
         setcall templates_data templates()
-        sd containers_data
+        sv containers_data
         set containers_data templates_data
         while templates_data#!=0
             add templates_data (template_data_size)
@@ -300,7 +300,7 @@ function loop(ss name,sd p_is_template)
             sd len2
             setcall len2 strlen(cursor)
             #
-            str dir_nm="dir"
+            vstr dir_nm="dir"
             setcall len strlen(dir_nm)
             if len=len2
                 setcall compare memcmp(cursor,dir_nm,len)
@@ -310,7 +310,7 @@ function loop(ss name,sd p_is_template)
                     set cursor# 0
 
                     call dirch(name)
-			if _main.sync_dest!=(NULL)
+			if main.sync_dest!=(NULL)
 				call sync_dest_dir_plus(name)
 			end
 
@@ -320,7 +320,7 @@ function loop(ss name,sd p_is_template)
                 #is a file 1
                 return name
             endif
-            str tmpl="container"
+            vstr tmpl="container"
             setcall len strlen(tmpl)
             if len=len2
                 setcall compare memcmp(cursor,tmpl,len)
@@ -338,7 +338,7 @@ function loop(ss name,sd p_is_template)
     return name
 endfunction
 #filepath
-function common_path_ex(sd dirname,sd basename,sd psize)
+function common_path_ex(sd dirname,sd basename,sv psize)
     charx path#MAX_PATH
     #
     sd sz
@@ -387,7 +387,7 @@ function template_string_length()
     return sz
 endfunction
 
-function src_get_template(ss filename,sd containers)
+function src_get_template(ss filename,sv containers)
     sd file
     setcall file src_open(filename)
     call file_seek(file,0,(SEEK_END))
@@ -401,13 +401,13 @@ function src_get_template(ss filename,sd containers)
 
 	call sync_src_fn(filename,mem,len)
 
-    sd t_cursor
+    sv t_cursor
     set t_cursor containers
     while t_cursor#!=0
         add t_cursor (template_data_size)
     endwhile
     set t_cursor# mem
-    add t_cursor (DWORD)
+    add t_cursor :
 
     ss t_str
     setcall t_str template_string()
@@ -418,15 +418,15 @@ function src_get_template(ss filename,sd containers)
     sub len pos
     sub len sz
     set t_cursor# pos
-    add t_cursor (DWORD)
+    add t_cursor :
     set t_cursor# len
-    add t_cursor (DWORD)
+    add t_cursor :
 
     set t_cursor# 0
 endfunction
 
 #mem
-function file_get_content_ex(ss filename,sd p_len,sd add)
+function file_get_content_ex(ss filename,sv p_len,sd add)
     sd file
     setcall file file_open(filename,"rb")
     call file_seek(file,0,(SEEK_END))
@@ -444,20 +444,20 @@ function file_get_content_ex(ss filename,sd p_len,sd add)
 endfunction
 
 function p_dest_folder()
-    data p#1
+    valuexu p#1
     return #p
 endfunction
 function dest_folder()
-    sd p;setcall p p_dest_folder()
+    sv p;setcall p p_dest_folder()
     return p#
 endfunction
 
 function p_src_folder()
-    data p#1
+    valuexu p#1
     return #p
 endfunction
 function src_folder()
-    sd p;setcall p p_src_folder()
+    sv p;setcall p p_src_folder()
     return p#
 endfunction
 
@@ -543,7 +543,7 @@ Function filepathdelims(ss str)
         Return (FALSE)
 EndFunction
 
-function replacements(sd p_cursor,sd file_out,sd file_out_sync)
+function replacements(sv p_cursor,sd file_out,sd file_out_sync)
     ss entry_mem
     sd entry_len
     ss file_srcpath
@@ -581,7 +581,7 @@ function replacements(sd p_cursor,sd file_out,sd file_out_sync)
 endfunction
 
 #cursor
-function get_src_dest(ss cursor,sd p_line)
+function get_src_dest(ss cursor,sv p_line)
     if cursor#=0
         call texter("src/dest files expected")
     endif
@@ -604,11 +604,11 @@ function get_alt(ss cursor)
 		if cursor#=(asciislash)
 			#set sync src
 			inc cursor
-			set _main.sync_src cursor
+			set main.sync_src cursor
 		elseif cursor#=(asciibackslash)
 			#set sync dest
 			inc cursor
-			set _main.sync_dest cursor
+			set main.sync_dest cursor
 		else
 			return start
 		end
@@ -623,13 +623,13 @@ end
 
 function sync_dest_dir_plus(sd plus)
 	sd sz
-	set sz strlen(_main.sync_dest)
+	set sz strlen(main.sync_dest)
 	sd szplus
 	set szplus strlen(plus)
 
 	ss from
 	set from sz
-	add from _main.sync_dest
+	add from main.sync_dest
 	add sz szplus
 	if sz<^(MAX_PATH_withoutNul+1)  ##+1 for slash, btw will error later if at max here
 		call memcpy(from,plus,szplus)
@@ -637,16 +637,16 @@ function sync_dest_dir_plus(sd plus)
 		set from# (asciislash)
 		inc from
 		set from# (asciinul)
-		call dir_make(_main.sync_dest)
+		call dir_make(main.sync_dest)
 		ret
 	end
 	call texter("error at sync dest")
 end
 function sync_dest_dir_minus()
-	ss c;set c strlen(_main.sync_dest)
-	add c _main.sync_dest
+	ss c;set c strlen(main.sync_dest)
+	add c main.sync_dest
 	dec c   ##was a plus/ (is a slash at end)
-	while c!=_main.sync_dest   ##can .. anytime and infinite loop here
+	while c!=main.sync_dest   ##can .. anytime and infinite loop here
 		dec c
 		if c#=(asciislash)
 			inc c
@@ -677,12 +677,12 @@ function file_open_folders_between(ss filename,sd bigsize,ss smallsize)
 end
 
 function sync_src_fn(ss filename,sd mem,sd len)
-	if _main.sync_src!=(NULL)
+	if main.sync_src!=(NULL)
 	#at src file is user fullpath
 		sd folders_verify_size
 		set folders_verify_size strlen(filename)
 		sd sizefull
-		sd p;set p common_path_ex(_main.sync_src,filename,#sizefull)
+		sd p;set p common_path_ex(main.sync_src,filename,#sizefull)
 		sd file
 		setcall file file_open_folders_between(p,sizefull,folders_verify_size)
 		call file_write(file,mem,len)
@@ -690,7 +690,7 @@ function sync_src_fn(ss filename,sd mem,sd len)
 	end
 end
 
-include "win.oh" "lin.oh"
+include "win.oc" "lin.oc"
 
 if argc<2
     call texter("file argument expected")
@@ -792,9 +792,9 @@ ss root
 setcall root dest_folder()
 call dirch(root)
 
-sd templates_data
+sv templates_data
 setcall templates_data templates()
-sd is_template#1
+charx is_template#1
 set templates_data# 0
 while cursor#!=0
     ss filename
@@ -803,11 +803,11 @@ while cursor#!=0
         if is_template=1
             call src_get_template(cursor,templates_data)
         else
-            sd t_cursor
+            sv t_cursor
             ss mem
             sd sz
             call log_set("F ",filename)
-            sd file;sd file_sync
+            sd file;sv file_sync
             setcall file file_open_dest(filename,#file_sync)
             #
             set t_cursor templates_data
@@ -815,10 +815,10 @@ while cursor#!=0
             set t_start t_cursor
             while t_cursor#!=0
                 set mem t_cursor#
-                add t_cursor (DWORD)
+                add t_cursor :
                 set sz t_cursor#
-                add t_cursor (DWORD)
-                add t_cursor (DWORD)
+                add t_cursor :
+                add t_cursor :
                 call file_write_duo(file,mem,sz,file_sync)
             endwhile
             #write main
@@ -826,12 +826,12 @@ while cursor#!=0
             call replacements(#cursor,file,file_sync)
             #
             while t_cursor!=t_start
-                sub t_cursor (DWORD)
+                sub t_cursor :
                 set sz t_cursor#
-                sub t_cursor (DWORD)
+                sub t_cursor :
                 sd prev_sz
                 set prev_sz t_cursor#
-                sub t_cursor (DWORD)
+                sub t_cursor :
                 set mem t_cursor#
                 add mem prev_sz
                 addcall mem template_string_length()

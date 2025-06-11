@@ -1,6 +1,6 @@
 
-mkdir dest && mkdir -p sync/dest && mkdir sync/src && \
-./wsb files.txt && \
+mkdir -p dest && mkdir -p sync/dest && mkdir -p sync/src && \
+${db} ./wsb files.txt && \
 diff -r /home/bc/arh/sites/files sync/src && \
 diff -r dest sync/dest && \
 if [ -n "${1}" ]; then
