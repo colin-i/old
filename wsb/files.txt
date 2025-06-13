@@ -3,7 +3,7 @@
 #first row is the source path
 /home/bc/arh/sites/files/
 
-#only second row can be relative, the destination path
+#the destination path row(the main folder)
 ./dest/
 
 
