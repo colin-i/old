@@ -18,11 +18,12 @@ function log_file()
     valuexu file#1
     return #file
 endfunction
+vstr log_location=".wsb.log"
 function log_open()
     sv file_store
     setcall file_store log_file()
     sd file
-    setcall file file_open(".wsb.log","wb")
+    setcall file file_open(main.log_location,"wb")
     set file_store# file
 endfunction
 function log_set(ss pre_text,ss text)
@@ -690,44 +691,87 @@ function sync_src_fn(ss filename,sd mem,sd len)
 	end
 end
 
+function usage()
+	call texter("USAGE: wsb file
+or:        f file
+           --remove-log
+           --help")
+end
+
+importx "_strcmp" strcmp
+importx "_unlink" unlink
+importx "_getchar" getchar
+importx "_printf" printf
+
+function command_line(sd argc,sv argv)
+	ss test;set test argv#
+	if test#=(asciif)
+		inc test
+		if test#=(asciinul)
+			incst argv
+			dec argc
+		end
+	end
+	if argc!=2
+		call usage()
+	end
+	sd c;set c strcmp(argv#,"--help")
+	if c=0
+		call usage()
+	end
+	set c strcmp(argv#,"--remove-log")
+	if c=0
+		ss from;set from to_home()
+		sd a;set a access(main.log_location,(F_OK))
+		if a=0
+			if from=(NULL)
+				set from "."
+			end
+			call printf("Would remove: \"%s\" from \"%s\". yes ? ",main.log_location,from)
+			sd e;set e getchar()
+			if e=(asciiy)
+				call unlink(main.log_location)
+			else
+				call puts("expecting \"y\"")
+			end
+		end
+		call exit(0)
+	end
+	return argv
+end
+
+function to_home()
+	importx "_getenv" getenv
+	sd e;vstr home_e="home error"
+	set e getenv("HOMEDRIVE")
+	if e!=(NULL)
+		call dirch_simple(e)
+		set e getenv("HOMEPATH")
+		if e!=(NULL)
+			call dirch_simple(e)
+		else
+			call texter(home_e)
+		end
+	else
+		set e getenv("HOME")
+		if e!=(NULL)
+			call dirch_simple(e)
+		else
+			call texter(home_e)
+		end
+	end
+	return e
+end
+
 include "win.oc" "lin.oc"
 
 if argc<2
-    call texter("file argument expected")
+	call usage()
 endif
 
-#go to log folder
-#sd size
-#ss pointer
-#ss start
-
-##char full_path#MAX_PATH
-##importx "_GetModuleFileNameA@12" GetModuleFileName
-##setcall size GetModuleFileName(0,#full_path,(MAX_PATH))
-##if size=0
-##    call texter("GetModuleFileName Error.")
-##endif
-##set start #full_path
-
-#set start argv#
-#setcall size strlen(start)
-
-#set pointer start
-#add pointer size
-#sd bool=FALSE
-#while bool=(FALSE)
-#    dec pointer
-#    setcall bool filepathdelims(pointer)
-#    if bool=(TRUE)
-#        set pointer# 0
-#    elseif pointer=start
-#        set bool (TRUE)
-#    endelseif
-#endwhile
-#call dirch_nolog(start)
-
 incst argv
-#"files.txt"
+set argv command_line(argc,argv)
+
 sd mem_main
 sd len
 setcall mem_main file_get_content_ex(argv#,#len,1)
@@ -766,25 +810,7 @@ end
 importx "_getcwd" getcwd
 set starting_dir getcwd((NULL),0)
 #
-importx "_getenv" getenv
-sd e;vstr home_e="home error"
-set e getenv("HOMEDRIVE")
-if e!=(NULL)
-	call dirch_simple(e)
-	set e getenv("HOMEPATH")
-	if e!=(NULL)
-		call dirch_simple(e)
-	else
-		call texter(home_e)
-	end
-else
-	set e getenv("HOME")
-	if e!=(NULL)
-		call dirch_simple(e)
-	else
-		call texter(home_e)
-	end
-end
+call to_home()
 call log_open()
 call dirch_simple(starting_dir)
 
@@ -847,4 +873,5 @@ while cursor#!=0
     inc cursor
 endwhile
 call log_close()
-return 0
+call exit(0)
+#return 0 is ok but at cross on arm and with qemu, is not knowing

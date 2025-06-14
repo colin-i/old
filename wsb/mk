@@ -1,23 +1,26 @@
 
+if [ -z "${linkerflags}" ]; then linkerflags="-O3 -s"; fi
+
 if [ -z "${1}" ]; then
+	if [ -z "${LD}" ]; then LD=ld; fi
 	if [ -z "${m32}" ]; then
-		o wsb.oc underscore_pref 1 include_sec 1 exit_end 1 ${OFLAGS} && \
+		o wsb.oc underscore_pref 1 include_sec 1 ${OFLAGS} ${OFLAGSEXTRA} && \
 		ounused wsb.oc.log && \
-		ld -O3 -s wsb.o -o wsb -lc -entry main --dynamic-linker=/lib64/ld-linux-x86-64.so.2
+		${LD} ${linkerflags} wsb.o -entry main --dynamic-linker=/lib64/ld-linux-x86-64.so.2 -o wsb -lc
 	else
-		o wsb.oc underscore_pref 1 include_sec 1 exit_end 1 conv_64 1 && \
+		o wsb.oc underscore_pref 1 include_sec 1 conv_64 1 ${OFLAGS} ${OFLAGSEXTRA} && \
 		ounused wsb.oc.log && \
 		#objcopy --redefine-sym _main=main wsb.o  #this will mess and can't use with inplace_reloc false either
-		ld -O3 -s -m elf_i386 wsb.o -o wsb -lc -entry main --dynamic-linker=/lib/ld-linux.so.2
+		${LD} ${linkerflags} -m elf_i386 wsb.o -entry main --dynamic-linker=/lib/ld-linux.so.2 -o wsb -lc
 	fi
 else
 	if [ -z "${m32}" ]; then
 		o wsb.oc underscore_pref 1 inplace_reloc 0 conv_64 2 && \
 		ounused wsb.oc.log && \
-		x86_64-w64-mingw32-gcc-win32 -O3 -s wsb.o -o wsb.exe
+		x86_64-w64-mingw32-gcc-win32 ${linkerflags} wsb.o -o wsb.exe
 	else
 		o wsb.oc inplace_reloc 0 conv_64 1 && \
 		ounused wsb.oc.log && \
-		i686-w64-mingw32-gcc-win32 -O3 -s wsb.o -o wsb.exe  #this is not working without uncommenting at win.oc
+		i686-w64-mingw32-gcc-win32 ${linkerflags} wsb.o -o wsb.exe  #this is not working without uncommenting at win.oc
 	fi
 fi
