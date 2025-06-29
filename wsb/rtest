@@ -1,2 +1,0 @@
-if [ -z "${db}" ]; then db=qq; fi
-db=${db} ./test

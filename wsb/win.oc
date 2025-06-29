@@ -1,6 +1,0 @@
-
-#functionx _main(sd argc,sv argv) #when testing i686 gcc
-#sd a;set a main(argc,argv)
-#return a
-#end
-entry main(sd argc,sv argv)

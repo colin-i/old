@@ -1,8 +1,0 @@
-
-mkdir -p dest && mkdir -p sync/dest && mkdir -p sync/src && \
-${db} ./wsb files.txt && \
-diff -r /home/bc/arh/sites/files sync/src && \
-diff -r dest sync/dest && \
-if [ -n "${1}" ]; then
-	diff -r dest ${1}   #diff from the original if required
-fi

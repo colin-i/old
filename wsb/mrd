@@ -1,1 +1,0 @@
-OFLAGSEXTRA="inplace_reloc 0" LD=/usr/x86_64-linux-gnu/bin/ld ./md
